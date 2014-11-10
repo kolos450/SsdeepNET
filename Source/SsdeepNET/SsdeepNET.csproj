@@ -51,7 +51,6 @@
     <Compile Include="Hasher.cs" />
     <Compile Include="Comparer.cs" />
     <Compile Include="FuzzyHashMode.cs" />
-    <Compile Include="Program.cs" />
     <Compile Include="Roll.cs" />
   </ItemGroup>
   <ItemGroup>
