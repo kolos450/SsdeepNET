@@ -25,7 +25,7 @@ namespace SsdeepNET
         public void Hash(byte c)
         {
             H = Hash(c, H);
-            HalfH = Hash(c, H);
+            HalfH = Hash(c, HalfH);
         }
 
         /* A simple non-rolling hash, based on the FNV hash. */
