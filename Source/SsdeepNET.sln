@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.21005.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31205.134
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SsdeepNET", "SsdeepNET\SsdeepNET.csproj", "{1030CAAE-0AC1-44DA-AAD9-9A48A954681C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SsdeepNET", "SsdeepNET\SsdeepNET.csproj", "{1030CAAE-0AC1-44DA-AAD9-9A48A954681C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SsdeepNET.Testing", "SsdeepNET.Testing\SsdeepNET.Testing.csproj", "{32D0B1E5-DACD-4700-BEBF-108B08DDC6F3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,8 +17,15 @@ Global
 		{1030CAAE-0AC1-44DA-AAD9-9A48A954681C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1030CAAE-0AC1-44DA-AAD9-9A48A954681C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1030CAAE-0AC1-44DA-AAD9-9A48A954681C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32D0B1E5-DACD-4700-BEBF-108B08DDC6F3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32D0B1E5-DACD-4700-BEBF-108B08DDC6F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32D0B1E5-DACD-4700-BEBF-108B08DDC6F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32D0B1E5-DACD-4700-BEBF-108B08DDC6F3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {43305A18-997D-461C-9679-1C6197BF2D30}
 	EndGlobalSection
 EndGlobal
