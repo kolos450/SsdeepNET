@@ -34,7 +34,7 @@ namespace SsdeepNET.Testing
         public void Test2d() =>
             Assert.Equal(0, Comparer.Compare("3:E:E", "3:ui:ui"));
 
-        [Fact(Skip = "TODO")]
+        [Fact]
         public void Test2e() =>
             Assert.Equal(0, Comparer.Compare("3:E:E", "192:/rtCMPFGVk+1cvtuIyeEUGZnhbvC6VsyYT6k8ylgKCaLizoQSbl:/5+7eVvwUL7gKCpzNSbl"));
 

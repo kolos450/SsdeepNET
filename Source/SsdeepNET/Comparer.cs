@@ -6,47 +6,46 @@ using System.Threading.Tasks;
 
 namespace SsdeepNET
 {
-    public sealed class Comparer
+    public static class Comparer
     {
         /// <summary>
-        /// Given two spamsum strings return a value indicating the degree to which they match
+        /// Given two spamsum strings return a value indicating the degree to which they match.
         /// </summary>
         /// <returns>
-        /// A value from zero to 100 indicating the match score of the two signatures
+        /// A value from 0 to 100 indicating the match score of the two signatures.
         /// </returns>
         public static int Compare(string str1, string str2)
         {
-            int block_size1;
-            int block_size2;
-            int score = 0;
-            char[] s1_1;
-            char[] s1_2;
-            char[] s2_1;
-            char[] s2_2;
+            if (str1 is null)
+                throw new ArgumentNullException(str1);
+            if (str2 is null)
+                throw new ArgumentNullException(str2);
 
-            if (str1 == null || str2 == null)
-                throw new ArgumentNullException();
-
-            // each spamsum is prefixed by its block size
+            // Each spamsum is prefixed by its block size.
             var colon1Pos = str1.IndexOf(':');
             var colon2Pos = str2.IndexOf(':');
             if (colon1Pos == -1 || colon2Pos == -1 ||
-                !Int32.TryParse(str1.Substring(0, colon1Pos), out block_size1) ||
-                !Int32.TryParse(str2.Substring(0, colon2Pos), out block_size2) ||
-                block_size1 < 1 || block_size2 < 1)
-                throw new Exception("Badly formed input");
+                !int.TryParse(str1.Substring(0, colon1Pos), out var block_size1) ||
+                !int.TryParse(str2.Substring(0, colon2Pos), out var block_size2) ||
+                block_size1 < 0 || block_size2 < 0)
+            {
+                throw new ArgumentException("Badly formed input");
+            }
 
-            // if the blocksizes don't match then we are comparing
-            // apples to oranges. This isn't an 'error' per se. We could
-            // have two valid signatures, but they can't be compared.
+            // If the blocksizes don't match then we are comparing apples to oranges.
+            // This isn't an 'error' per se. We could have two valid signatures, but they can't be compared.
             if (block_size1 != block_size2 && block_size1 != block_size2 * 2 && block_size2 != block_size1 * 2)
-                throw new Exception("Given signatures cannot be compared");
+            {
+                return 0;
+            }
 
             var colon12Pos = str1.IndexOf(':', colon1Pos + 1);
             var colon22Pos = str2.IndexOf(':', colon2Pos + 1);
 
             if (colon12Pos == -1 || colon22Pos == -1)
-                throw new Exception("Badly formed input");
+            {
+                throw new ArgumentException("Badly formed input");
+            }
 
             // Chop the second string at the comma--just before the filename.
             // If the strings don't have a comma (i.e. don't have a filename)
@@ -57,18 +56,19 @@ namespace SsdeepNET
             var comma1Pos = str1.IndexOf(',', colon12Pos + 1);
             var comma2Pos = str2.IndexOf(',', colon22Pos + 1);
 
-            s1_1 = str1.ToCharArray(colon1Pos + 1, colon12Pos - colon1Pos - 1);
-            s2_1 = str2.ToCharArray(colon2Pos + 1, colon22Pos - colon2Pos - 1);
+            var s1_1 = str1.ToCharArray(colon1Pos + 1, colon12Pos - colon1Pos - 1);
+            var s2_1 = str2.ToCharArray(colon2Pos + 1, colon22Pos - colon2Pos - 1);
 
-            s1_2 = str1.ToCharArray(colon12Pos + 1, comma1Pos == -1 ? str1.Length - colon12Pos - 1 : comma1Pos - colon12Pos - 1);
-            s2_2 = str2.ToCharArray(colon22Pos + 1, comma2Pos == -1 ? str2.Length - colon22Pos - 1 : comma2Pos - colon22Pos - 1);
+            var s1_2 = str1.ToCharArray(colon12Pos + 1, comma1Pos == -1 ? str1.Length - colon12Pos - 1 : comma1Pos - colon12Pos - 1);
+            var s2_2 = str2.ToCharArray(colon22Pos + 1, comma2Pos == -1 ? str2.Length - colon22Pos - 1 : comma2Pos - colon22Pos - 1);
 
-            if (s1_1.Length == 0 || s2_1.Length == 0 || s1_2.Length == 0 || s2_2.Length == 0)
-                throw new Exception("Badly formed input");
+            if (s1_1.Length is 0 || s2_1.Length is 0 || s1_2.Length is 0 || s2_2.Length is 0)
+            {
+                throw new ArgumentException("Badly formed input");
+            }
 
-            // there is very little information content is sequences of
-            // the same character like 'LLLLL'. Eliminate any sequences
-            // longer than 3. This is especially important when combined
+            // There is very little information content is sequences of the same character like 'LLLLL'.
+            // Eliminate any sequences longer than 3. This is especially important when combined
             // with the has_common_substring() test below.
             // NOTE: This function duplciates str1 and str2
             s1_1 = EliminateSequences(s1_1);
@@ -76,8 +76,8 @@ namespace SsdeepNET
             s1_2 = EliminateSequences(s1_2);
             s2_2 = EliminateSequences(s2_2);
 
-            // Now that we know the strings are both well formed, are they
-            // identical? We could save ourselves some work here
+            // Now that we know the strings are both well formed, are they identical?
+            // We could save ourselves some work here.
             if (block_size1 == block_size2 && s1_1.Length == s2_1.Length)
             {
                 bool matched = true;
@@ -89,37 +89,37 @@ namespace SsdeepNET
                         break;
                     }
                 }
+
                 if (matched)
+                {
                     return 100;
+                }
             }
 
-            // each signature has a string for two block sizes. We now
-            // choose how to combine the two block sizes. We checked above
-            // that they have at least one block size in common
+            // Each signature has a string for two block sizes. We now choose how to combine the two block sizes.
+            // We checked above that they have at least one block size in common.
             if (block_size1 == block_size2)
             {
-                int score1;
-                int score2;
-                score1 = ScoreStrings(s1_1, s2_1, block_size1);
-                score2 = ScoreStrings(s1_2, s2_2, block_size1 * 2);
-                score = Math.Max(score1, score2);
+                return Math.Max(
+                    ScoreStrings(s1_1, s2_1, block_size1),
+                    ScoreStrings(s1_2, s2_2, block_size1 * 2));
             }
             else if (block_size1 == block_size2 * 2)
             {
-                score = ScoreStrings(s1_1, s2_2, block_size1);
+                return ScoreStrings(s1_1, s2_2, block_size1);
             }
             else
             {
-                score = ScoreStrings(s1_2, s2_1, block_size2);
+                return ScoreStrings(s1_2, s2_1, block_size2);
             }
-
-            return score;
         }
 
-        // eliminate sequences of longer than 3 identical characters. These
-        // sequences contain very little information so they tend to just bias
-        // the result unfairly
-        internal static char[] EliminateSequences(char[] str)
+        /// <summary>
+        /// Eliminate sequences of longer than 3 identical characters.
+        /// These sequences contain very little information so they tend to just bias
+        /// the result unfairly.
+        /// </summary>
+        private static char[] EliminateSequences(char[] str)
         {
             var ret = new char[str.Length];
             uint i;
@@ -128,7 +128,7 @@ namespace SsdeepNET
             var len = str.Length;
             for (i = 0; i < 3 && i < len; i++)
                 ret[i] = str[i];
-            
+
             if (len < 3)
                 return ret;
 
@@ -147,20 +147,16 @@ namespace SsdeepNET
             return ret;
         }
 
-        //
-        // this is the low level string scoring algorithm. It takes two strings
-        // and scores them on a scale of 0-100 where 0 is a terrible match and
-        // 100 is a great match. The block_size is used to cope with very small
-        // messages.
-        //
+        /// <summary>
+        /// This is the low level string scoring algorithm. It takes two strings
+        /// and scores them on a scale of 0-100 where 0 is a terrible match and
+        /// 100 is a great match. The block_size is used to cope with very small
+        /// messages.
+        /// </summary>
         private static int ScoreStrings(char[] s1, char[] s2, int block_size)
         {
-            int score;
-            int len1;
-            int len2;
-
-            len1 = s1.Length;
-            len2 = s2.Length;
+            var len1 = s1.Length;
+            var len2 = s2.Length;
 
             if (len1 > FuzzyConstants.SpamSumLength || len2 > FuzzyConstants.SpamSumLength)
             {
@@ -175,7 +171,7 @@ namespace SsdeepNET
 
             // compute the edit distance between the two strings. The edit distance gives
             // us a pretty good idea of how closely related the two strings are
-            score = EditDistance.Compute(s1, s2);
+            var score = EditDistance.Compute(s1, s2);
 
             // scale the edit distance by the lengths of the two
             // strings. This changes the score to be a measure of the
@@ -209,20 +205,18 @@ namespace SsdeepNET
             return score;
         }
 
-        //
-        // We only accept a match if we have at least one common substring in
-        // the signature of length ROLLING_WINDOW. This dramatically drops the
-        // false positive rate for low score thresholds while having
-        // negligable affect on the rate of spam detection.
-        //
-        // return 1 if the two strings do have a common substring, 0 otherwise
-        //
+        /// <summary>
+        /// We only accept a match if we have at least one common substring in
+        /// the signature of length ROLLING_WINDOW. This dramatically drops the
+        /// false positive rate for low score thresholds while having
+        /// negligable affect on the rate of spam detection.
+        /// </summary>
+        /// <param name="s1"></param>
+        /// <param name="s2"></param>
+        /// <returns>True if the two strings do have a common substring, false otherwise.</returns>
         private static bool HasCommonSubstring(char[] s1, char[] s2)
         {
-            int i;
-            int j;
-            int num_hashes;
-            uint[] hashes = new uint[FuzzyConstants.SpamSumLength];
+            var hashes = new uint[FuzzyConstants.SpamSumLength];
 
             // there are many possible algorithms for common substring
             // detection. In this case I am re-using the rolling hash code
@@ -232,12 +226,13 @@ namespace SsdeepNET
             // the first string
             var state = new Roll();
 
+            int i;
             for (i = 0; i < s1.Length && s1[i] != '\0'; i++)
             {
                 state.Hash((byte)s1[i]);
                 hashes[i] = state.Sum();
             }
-            num_hashes = i;
+            var num_hashes = i;
 
             state = new Roll();
 
@@ -252,7 +247,7 @@ namespace SsdeepNET
                 uint h = state.Sum();
                 if (i < FuzzyConstants.RollingWindow - 1)
                     continue;
-                for (j = FuzzyConstants.RollingWindow - 1; j < num_hashes; j++)
+                for (int j = FuzzyConstants.RollingWindow - 1; j < num_hashes; j++)
                 {
                     if (hashes[j] != 0 && hashes[j] == h)
                     {
@@ -276,7 +271,7 @@ namespace SsdeepNET
                                 break;
                             }
 
-                            if (s1char == '\0')
+                            if (s1char is '\0')
                                 break;
                         }
 
