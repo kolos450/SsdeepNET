@@ -6,11 +6,13 @@ using System.Threading.Tasks;
 
 namespace SsdeepNET
 {
-    /* A blockhash contains a signature state for a specific (implicit) blocksize.
-     * The blocksize is given by SSDEEP_BS(index). The h and halfh members are the
-     * FNV hashes, where halfh stops to be reset after digest is SPAMSUM_LENGTH/2
-     * long. The halfh hash is needed be able to truncate digest for the second
-     * output hash to stay compatible with ssdeep output. */
+    /// <summary>
+    /// A blockhash contains a signature state for a specific (implicit) blocksize.
+    /// The blocksize is given by SSDEEP_BS(index). The h and halfh members are the
+    /// FNV hashes, where halfh stops to be reset after digest is SPAMSUM_LENGTH/2
+    /// long. The halfh hash is needed be able to truncate digest for the second
+    /// output hash to stay compatible with ssdeep output.
+    /// </summary>
     sealed class BlockhashContext
     {
         const int HashPrime = 0x01000193;

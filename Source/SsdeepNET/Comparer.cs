@@ -17,9 +17,9 @@ namespace SsdeepNET
         public static int Compare(string str1, string str2)
         {
             if (str1 is null)
-                throw new ArgumentNullException(str1);
+                throw new ArgumentNullException(nameof(str1));
             if (str2 is null)
-                throw new ArgumentNullException(str2);
+                throw new ArgumentNullException(nameof(str2));
 
             // Each spamsum is prefixed by its block size.
             var colon1Pos = str1.IndexOf(':');
@@ -29,7 +29,7 @@ namespace SsdeepNET
                 !int.TryParse(str2.Substring(0, colon2Pos), out var block_size2) ||
                 block_size1 < 0 || block_size2 < 0)
             {
-                throw new ArgumentException("Badly formed input");
+                throw new ArgumentException("Badly formed input.");
             }
 
             // If the blocksizes don't match then we are comparing apples to oranges.
@@ -44,7 +44,7 @@ namespace SsdeepNET
 
             if (colon12Pos == -1 || colon22Pos == -1)
             {
-                throw new ArgumentException("Badly formed input");
+                throw new ArgumentException("Badly formed input.");
             }
 
             // Chop the second string at the comma--just before the filename.
@@ -64,7 +64,7 @@ namespace SsdeepNET
 
             if (s1_1.Length is 0 || s2_1.Length is 0 || s1_2.Length is 0 || s2_2.Length is 0)
             {
-                throw new ArgumentException("Badly formed input");
+                throw new ArgumentException("Badly formed input.");
             }
 
             // There is very little information content is sequences of the same character like 'LLLLL'.
@@ -230,7 +230,7 @@ namespace SsdeepNET
             for (i = 0; i < s1.Length && s1[i] != '\0'; i++)
             {
                 state.Hash((byte)s1[i]);
-                hashes[i] = state.Sum();
+                hashes[i] = state.Sum;
             }
             var num_hashes = i;
 
@@ -244,7 +244,7 @@ namespace SsdeepNET
             for (i = 0; i < s2.Length && s2[i] != '\0'; i++)
             {
                 state.Hash((byte)s2[i]);
-                uint h = state.Sum();
+                uint h = state.Sum;
                 if (i < FuzzyConstants.RollingWindow - 1)
                     continue;
                 for (int j = FuzzyConstants.RollingWindow - 1; j < num_hashes; j++)

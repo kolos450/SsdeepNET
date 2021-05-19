@@ -12,7 +12,7 @@ namespace SsdeepNET.Testing
     {
         private static void Test(byte[] input, string expectedHash, FuzzyHashMode mode = FuzzyHashMode.None)
         {
-            var actualHash = Hasher.HashBuffer(input, input.Length, mode);
+            var actualHash = Hasher.HashBuffer(input, mode);
             Assert.Equal(expectedHash, actualHash);
         }
 
@@ -32,7 +32,7 @@ namespace SsdeepNET.Testing
             Test(buffer, expectedHash);
         }
 
-        [Fact(Skip = "TODO")]
+        [Fact]
         public void Test1()
         {
             Assert.Throws<ArgumentNullException>(() => Hasher.HashBuffer(null, 0));

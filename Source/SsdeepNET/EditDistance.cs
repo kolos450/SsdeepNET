@@ -2,6 +2,9 @@
 
 namespace SsdeepNET
 {
+    /// <summary>
+    /// Levenshtein distance calculator.
+    /// </summary>
     internal static class EditDistance
     {
         /**

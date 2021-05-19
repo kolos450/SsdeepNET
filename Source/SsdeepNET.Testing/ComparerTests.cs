@@ -7,7 +7,7 @@ namespace SsdeepNET.Testing
 {
     public class ComparerTests
     {
-        [Fact(Skip = "TODO")]
+        [Fact]
         public void Test1()
         {
             Assert.Throws<ArgumentNullException>(() => Comparer.Compare(null, ""));

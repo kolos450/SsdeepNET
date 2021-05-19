@@ -2,32 +2,77 @@
 using System;
 using System.Text;
 using System.IO;
+using System.Buffers;
 
 namespace SsdeepNET
 {
     public sealed class Hasher
     {
         /// <summary>
+        /// Computes the fuzzy hash of the buffer.
+        /// </summary>
+        public static string HashBuffer(byte[] buffer) =>
+            HashBuffer(buffer, 0, buffer?.Length ?? 0);
+
+        /// <summary>
         /// Computes the fuzzy hash of the first len bytes of the buffer.
         /// </summary>
-        public static string HashBuffer(byte[] buf, int len, FuzzyHashMode flags = FuzzyHashMode.None)
+        public static string HashBuffer(byte[] buffer, int length) =>
+            HashBuffer(buffer, 0, length);
+
+        /// <summary>
+        /// Computes the fuzzy hash of the buffer.
+        /// </summary>
+        public static string HashBuffer(byte[] buffer, int offset, int length) =>
+            HashBuffer(buffer, offset, length, FuzzyHashMode.None);
+
+        /// <summary>
+        /// Computes the fuzzy hash of the buffer.
+        /// </summary>
+        public static string HashBuffer(byte[] buffer, int offset, int length, FuzzyHashMode flags)
         {
-            var ctx = new Hasher();
-            ctx.Update(buf, len);
-            return ctx.Digest(flags);
+            if (buffer is null)
+                throw new ArgumentNullException(nameof(buffer));
+            if (offset >= buffer.Length)
+                throw new ArgumentException("Invalid offset.", nameof(offset));
+            if (offset + length > buffer.Length)
+                throw new ArgumentException("Invalid length.", nameof(length));
+
+            var memory = new ReadOnlyMemory<byte>(buffer, offset, length);
+            return HashBuffer(memory, flags);
         }
 
-        private uint _bhstart = 0;
+        /// <summary>
+        /// Computes the fuzzy hash of the buffer.
+        /// </summary>
+        public static string HashBuffer(ReadOnlyMemory<byte> memory) =>
+            HashBuffer(memory, FuzzyHashMode.None);
+
+        /// <summary>
+        /// Computes the fuzzy hash of the buffer.
+        /// </summary>
+        public static string HashBuffer(ReadOnlyMemory<byte> memory, FuzzyHashMode flags)
+        {
+            var hasher = new Hasher();
+            hasher.Update(memory);
+            return hasher.Digest(flags);
+        }
+
+        private int _bhstart = 0;
         private uint _bhend = 1;
         private BlockhashContext[] _bh;
-        private uint _totalSize = 0;
-        private Roll _roll = new Roll();
+        private int _totalSize = 0;
+        private Roll _roll = new();
 
-        private Hasher()
+        public Hasher()
         {
             _bh = new BlockhashContext[FuzzyConstants.NumBlockhashes];
+
             for (int i = 0; i < _bh.Length; i++)
+            {
                 _bh[i] = new BlockhashContext();
+            }
+
             _bh[0].Reset(true);
         }
 
@@ -36,7 +81,9 @@ namespace SsdeepNET
             var i = 0;
 
             while (i < 3 && i < n)
+            {
                 dst[pos++] = src[i++];
+            }
 
             while (i < n)
             {
@@ -55,22 +102,22 @@ namespace SsdeepNET
         /// This operation does not change the state at all. It reports the hash for the
         /// concatenation of the data previously fed using fuzzy_update.
         /// </summary>
-        private string Digest(FuzzyHashMode flags)
+        public string Digest(FuzzyHashMode flags)
         {
             var result = new byte[FuzzyConstants.MaxResultLength];
             var pos = 0;
 
-            uint bi = _bhstart;
-            uint h = _roll.Sum();
+            int bi = _bhstart;
+            uint h = _roll.Sum;
             int i; // Exclude terminating '\0'.
 
             /* Initial blocksize guess. */
-            while ((uint)(((uint)FuzzyConstants.MinBlocksize) << (int)(bi)) * FuzzyConstants.SpamSumLength < _totalSize)
+            while ((FuzzyConstants.MinBlocksize << bi) * FuzzyConstants.SpamSumLength < _totalSize)
             {
                 ++bi;
                 if (bi >= FuzzyConstants.NumBlockhashes)
                 {
-                    throw new OverflowException("EOVERFLOW");
+                    throw new OverflowException("Blockhashes number overflow.");
                 }
             }
             /* Adapt blocksize guess to actual digest length. */
@@ -83,7 +130,7 @@ namespace SsdeepNET
                 --bi;
             }
 
-            var actualBlockSize = (((uint)FuzzyConstants.MinBlocksize) << (int)(bi));
+            var actualBlockSize = ((uint)FuzzyConstants.MinBlocksize) << bi;
             var blockSizeChars = actualBlockSize.ToString().ToCharArray();
             i = blockSizeChars.Length;
             for (int j = 0; j < i; j++)
@@ -96,7 +143,7 @@ namespace SsdeepNET
             if (flags.HasFlag(FuzzyHashMode.EliminateSequences))
                 i = MemcpyEliminateSequences(result, pos, _bh[bi].Digest, i);
             else
-                Array.Copy(_bh[bi].Digest, 0, result, pos, i);
+                Buffer.BlockCopy(_bh[bi].Digest, 0, result, pos, i);
 
             pos += i;
             if (h != 0)
@@ -127,7 +174,7 @@ namespace SsdeepNET
                 if (flags.HasFlag(FuzzyHashMode.EliminateSequences))
                     i = MemcpyEliminateSequences(result, pos, _bh[bi].Digest, i);
                 else
-                    Array.Copy(_bh[bi].Digest, 0, result, pos, i);
+                    Buffer.BlockCopy(_bh[bi].Digest, 0, result, pos, i);
 
                 pos += i;
                 if (h != 0)
@@ -152,8 +199,7 @@ namespace SsdeepNET
             else if (h != 0)
             {
                 result[pos++] = FuzzyConstants.Base64[_bh[bi].H % 64];
-                /* No need to bother with FuzzyHashMode.EliminateSequences, because this
-                 * digest has length 1. */
+                // No need to bother with FuzzyHashMode.EliminateSequences, because this digest has length 1.
             }
 
             return Encoding.ASCII.GetString(result, 0, pos);
@@ -161,12 +207,10 @@ namespace SsdeepNET
 
         private void TryForkBlockhash()
         {
-            BlockhashContext obh;
-            BlockhashContext nbh;
             if (_bhend >= FuzzyConstants.NumBlockhashes)
                 return;
-            obh = _bh[_bhend - 1];
-            nbh = _bh[_bhend];
+            var obh = _bh[_bhend - 1];
+            var nbh = _bh[_bhend];
             nbh.H = obh.H;
             nbh.HalfH = obh.HalfH;
             nbh.Digest[0] = 0;
@@ -180,7 +224,7 @@ namespace SsdeepNET
             if (_bhend - _bhstart < 2)
                 /* Need at least two working hashes. */
                 return;
-            if ((uint)(((uint)FuzzyConstants.MinBlocksize) << (int)(_bhstart)) * FuzzyConstants.SpamSumLength >= _totalSize)
+            if ((((uint)FuzzyConstants.MinBlocksize) << _bhstart) * FuzzyConstants.SpamSumLength >= _totalSize)
                 /* Initial blocksize estimate would select this or a smaller
                  * blocksize. */
                 return;
@@ -195,20 +239,21 @@ namespace SsdeepNET
         private void EngineStep(byte c)
         {
             uint h;
-            uint i;
             /* At each character we update the rolling hash and the normal hashes.
              * When the rolling hash hits a reset value then we emit a normal hash
              * as a element of the signature and reset the normal hash. */
             _roll.Hash(c);
-            h = _roll.Sum();
+            h = _roll.Sum;
 
-            for (i = _bhstart; i < _bhend; ++i)
+            for (int i = _bhstart; i < _bhend; ++i)
+            {
                 _bh[i].Hash(c);
+            }
 
-            for (i = _bhstart; i < _bhend; ++i)
+            for (int i = _bhstart; i < _bhend; ++i)
             {
                 /* With growing blocksize almost no runs fail the next test. */
-                if (h % (((uint)FuzzyConstants.MinBlocksize) << (int)(i)) != (((uint)FuzzyConstants.MinBlocksize) << (int)(i)) - 1)
+                if (h % (((uint)FuzzyConstants.MinBlocksize) << i) != (((uint)FuzzyConstants.MinBlocksize) << i) - 1)
                     /* Once this condition is false for one bs, it is
                      * automatically false for all further bs. I.e. if
                      * h === -1 (mod 2*bs) then h === -1 (mod bs). */
@@ -220,7 +265,7 @@ namespace SsdeepNET
                 {
                     /* Can only happen 30 times. */
                     /* First step for this blocksize. Clone next. */
-                    this.TryForkBlockhash();
+                    TryForkBlockhash();
                 }
                 _bh[i].Digest[_bh[i].DLen] = FuzzyConstants.Base64[_bh[i].H % 64];
                 _bh[i].HalfDigest = FuzzyConstants.Base64[_bh[i].HalfH % 64];
@@ -236,7 +281,7 @@ namespace SsdeepNET
                 }
                 else
                 {
-                    this.TryReduceBlockhash();
+                    TryReduceBlockhash();
                 }
             }
         }
@@ -244,12 +289,14 @@ namespace SsdeepNET
         /// <summary>
         /// Feed the data contained in the given buffer to the state.
         /// </summary>
-        private void Update(byte[] buffer, int len)
+        public void Update(ReadOnlyMemory<byte> memory)
         {
-            _totalSize += (uint)buffer.Length;
+            _totalSize += memory.Length;
 
-            for (int i = 0; i < len; i++)
-                this.EngineStep(buffer[i]);
+            foreach (var b in memory.Span)
+            {
+                EngineStep(b);
+            }
         }
     }
 }

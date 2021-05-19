@@ -1,9 +1,16 @@
 ﻿SsdeepNET.Comparer
-SsdeepNET.Comparer.Comparer() -> void
 SsdeepNET.FuzzyHashMode
 SsdeepNET.FuzzyHashMode.DoNotTruncate = 2 -> SsdeepNET.FuzzyHashMode
 SsdeepNET.FuzzyHashMode.EliminateSequences = 1 -> SsdeepNET.FuzzyHashMode
 SsdeepNET.FuzzyHashMode.None = 0 -> SsdeepNET.FuzzyHashMode
 SsdeepNET.Hasher
+SsdeepNET.Hasher.Digest(SsdeepNET.FuzzyHashMode flags) -> string
+SsdeepNET.Hasher.Hasher() -> void
+SsdeepNET.Hasher.Update(System.ReadOnlyMemory<byte> memory) -> void
 static SsdeepNET.Comparer.Compare(string str1, string str2) -> int
-static SsdeepNET.Hasher.HashBuffer(byte[] buf, int len, SsdeepNET.FuzzyHashMode flags = SsdeepNET.FuzzyHashMode.None) -> string
+static SsdeepNET.Hasher.HashBuffer(byte[] buffer) -> string
+static SsdeepNET.Hasher.HashBuffer(byte[] buffer, int length) -> string
+static SsdeepNET.Hasher.HashBuffer(byte[] buffer, int offset, int length) -> string
+static SsdeepNET.Hasher.HashBuffer(byte[] buffer, int offset, int length, SsdeepNET.FuzzyHashMode flags) -> string
+static SsdeepNET.Hasher.HashBuffer(System.ReadOnlyMemory<byte> memory) -> string
+static SsdeepNET.Hasher.HashBuffer(System.ReadOnlyMemory<byte> memory, SsdeepNET.FuzzyHashMode flags) -> string
