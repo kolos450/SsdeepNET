@@ -1,12 +1,14 @@
 ﻿namespace SsdeepNET
 {
-    sealed class Roll
+    struct Roll
     {
+        public Roll() { }
+
         private byte[] _window = new byte[Constants.RollingWindow];
-        private uint _h1;
-        private uint _h2;
-        private uint _h3;
-        private uint _n;
+        private uint _h1 = 0;
+        private uint _h2 = 0;
+        private uint _h3 = 0;
+        private uint _n = 0;
 
         public uint Sum => _h1 + _h2 + _h3;
 
