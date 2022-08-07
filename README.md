@@ -16,7 +16,7 @@ string hashFoo = fuzzyHash.ComputeHash(bytesFoo);
 string hashBar = fuzzyHash.ComputeHash(bytesBar);
 
 // Returns a value from 0 to 100 indicating the match score of the two hashes.
-int comparisonResult = fuzzyHash.Compare(hashFoo, hashBar);
+int comparisonResult = fuzzyHash.CompareHashes(hashFoo, hashBar);
 
 Console.WriteLine(comparisonResult);
 ```
