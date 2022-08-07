@@ -48,16 +48,16 @@ namespace SsdeepNET
             var colon1Pos = x.IndexOf(':');
             var colon2Pos = y.IndexOf(':');
             if (colon1Pos == -1 || colon2Pos == -1 ||
-                !int.TryParse(x.Substring(0, colon1Pos), out var block_size1) ||
-                !int.TryParse(y.Substring(0, colon2Pos), out var block_size2) ||
-                block_size1 < 0 || block_size2 < 0)
+                !int.TryParse(x.Substring(0, colon1Pos), out var blockSize1) ||
+                !int.TryParse(y.Substring(0, colon2Pos), out var blockSize2) ||
+                blockSize1 < 0 || blockSize2 < 0)
             {
                 throw new ArgumentException("Badly formed input.");
             }
 
             // If the blocksizes don't match then we are comparing apples to oranges.
             // This isn't an 'error' per se. We could have two valid signatures, but they can't be compared.
-            if (block_size1 != block_size2 && block_size1 != block_size2 * 2 && block_size2 != block_size1 * 2)
+            if (blockSize1 != blockSize2 && blockSize1 != blockSize2 * 2 && blockSize2 != blockSize1 * 2)
             {
                 return 0;
             }
@@ -99,7 +99,7 @@ namespace SsdeepNET
 
             // Now that we know the strings are both well formed, are they identical?
             // We could save ourselves some work here.
-            if (block_size1 == block_size2 && s1_1.Length == s2_1.Length)
+            if (blockSize1 == blockSize2 && s1_1.Length == s2_1.Length)
             {
                 bool matched = true;
                 for (int i = 0; i < s1_1.Length; i++)
@@ -119,19 +119,19 @@ namespace SsdeepNET
 
             // Each signature has a string for two block sizes. We now choose how to combine the two block sizes.
             // We checked above that they have at least one block size in common.
-            if (block_size1 == block_size2)
+            if (blockSize1 == blockSize2)
             {
                 return Math.Max(
-                    ScoreStrings(s1_1, s2_1, block_size1),
-                    ScoreStrings(s1_2, s2_2, block_size1 * 2));
+                    ScoreStrings(s1_1, s2_1, blockSize1),
+                    ScoreStrings(s1_2, s2_2, blockSize1 * 2));
             }
-            else if (block_size1 == block_size2 * 2)
+            else if (blockSize1 == blockSize2 * 2)
             {
-                return ScoreStrings(s1_1, s2_2, block_size1);
+                return ScoreStrings(s1_1, s2_2, blockSize1);
             }
             else
             {
-                return ScoreStrings(s1_2, s2_1, block_size2);
+                return ScoreStrings(s1_2, s2_1, blockSize2);
             }
         }
 
@@ -142,32 +142,13 @@ namespace SsdeepNET
         /// </summary>
         private static char[] EliminateSequences(char[] str)
         {
-            if (str.Length <= 3)
+            var newLength = BufferUtilities.EliminateSequences(str, 0, null, 0, str.Length, Constants.SequencesToEliminateLength);
+            if (newLength == str.Length)
                 return str;
 
-            var ret = new char[str.Length];
-
-            var len = str.Length;
-            for (int i = 0; i < 3; i++)
-                ret[i] = str[i];
-
-            int j = 3;
-            for (int i = j; i < len; i++)
-            {
-                var current = str[i];
-                if (current != str[i - 1] || current != str[i - 2] || current != str[i - 3])
-                {
-                    ret[j++] = str[i];
-                }
-            }
-
-            if (len == j)
-                return ret;
-
-            var trimmed = new char[j];
-            Array.Copy(ret, trimmed, j);
-
-            return trimmed;
+            var newStr = new char[newLength];
+            BufferUtilities.EliminateSequences(str, 0, newStr, 0, str.Length, Constants.SequencesToEliminateLength);
+            return newStr;
         }
 
         /// <summary>

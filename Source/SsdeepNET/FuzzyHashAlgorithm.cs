@@ -58,25 +58,6 @@ namespace SsdeepNET
             return buffer;
         }
 
-        private static int MemcpyEliminateSequences(byte[] src, int srcOffset, byte[] dst, int dstOffset, int count)
-        {
-            int i = 0;
-
-            while (i < 3 && i < count)
-                dst[dstOffset++] = src[srcOffset + i++];
-
-            while (i < count)
-            {
-                var current = src[srcOffset + i++];
-                if (current == dst[dstOffset - 1] && current == dst[dstOffset - 2] && current == dst[dstOffset - 3])
-                    count--;
-                else
-                    dst[dstOffset++] = current;
-            }
-
-            return count;
-        }
-
         internal ArraySegment<byte> HashFinalCore()
         {
             EnsureInitialized();
@@ -115,7 +96,7 @@ namespace SsdeepNET
 
             i = (int)_bh[bi].DigestLen;
             if (eliminateSequences)
-                i = MemcpyEliminateSequences(_bh[bi].Digest, 0, result, pos, i);
+                i = BufferUtilities.EliminateSequences(_bh[bi].Digest, 0, result, pos, i, Constants.SequencesToEliminateLength);
             else
                 Buffer.BlockCopy(_bh[bi].Digest, 0, result, pos, i);
             pos += i;
@@ -144,7 +125,7 @@ namespace SsdeepNET
                     i = Constants.SpamSumLength / 2 - 1;
 
                 if (eliminateSequences)
-                    i = MemcpyEliminateSequences(_bh[bi].Digest, 0, result, pos, i);
+                    i = BufferUtilities.EliminateSequences(_bh[bi].Digest, 0, result, pos, i, Constants.SequencesToEliminateLength);
                 else
                     Buffer.BlockCopy(_bh[bi].Digest, 0, result, pos, i);
 
