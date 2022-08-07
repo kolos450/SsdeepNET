@@ -1,16 +1,19 @@
-﻿SsdeepNET.Comparer
-SsdeepNET.FuzzyHashMode
-SsdeepNET.FuzzyHashMode.DoNotTruncate = 2 -> SsdeepNET.FuzzyHashMode
-SsdeepNET.FuzzyHashMode.EliminateSequences = 1 -> SsdeepNET.FuzzyHashMode
-SsdeepNET.FuzzyHashMode.None = 0 -> SsdeepNET.FuzzyHashMode
-SsdeepNET.Hasher
-SsdeepNET.Hasher.Digest(SsdeepNET.FuzzyHashMode flags) -> string
-SsdeepNET.Hasher.Hasher() -> void
-SsdeepNET.Hasher.Update(System.ReadOnlyMemory<byte> memory) -> void
-static SsdeepNET.Comparer.Compare(string str1, string str2) -> int
-static SsdeepNET.Hasher.HashBuffer(byte[] buffer) -> string
-static SsdeepNET.Hasher.HashBuffer(byte[] buffer, int length) -> string
-static SsdeepNET.Hasher.HashBuffer(byte[] buffer, int offset, int length) -> string
-static SsdeepNET.Hasher.HashBuffer(byte[] buffer, int offset, int length, SsdeepNET.FuzzyHashMode flags) -> string
-static SsdeepNET.Hasher.HashBuffer(System.ReadOnlyMemory<byte> memory) -> string
-static SsdeepNET.Hasher.HashBuffer(System.ReadOnlyMemory<byte> memory, SsdeepNET.FuzzyHashMode flags) -> string
+﻿SsdeepNET.FuzzyHash
+SsdeepNET.FuzzyHash.AsHashAlgorithm() -> System.Security.Cryptography.HashAlgorithm
+SsdeepNET.FuzzyHash.Compare(string x, string y) -> int
+SsdeepNET.FuzzyHash.ComputeHash(System.ReadOnlySpan<byte> span) -> string
+SsdeepNET.FuzzyHash.Flags.get -> SsdeepNET.FuzzyHashFlags
+SsdeepNET.FuzzyHash.FuzzyHash(SsdeepNET.FuzzyHashFlags hashMode = SsdeepNET.FuzzyHashFlags.None) -> void
+SsdeepNET.FuzzyHashExtensions
+SsdeepNET.FuzzyHashFlags
+SsdeepNET.FuzzyHashFlags.DoNotTruncate = 2 -> SsdeepNET.FuzzyHashFlags
+SsdeepNET.FuzzyHashFlags.EliminateSequences = 1 -> SsdeepNET.FuzzyHashFlags
+SsdeepNET.FuzzyHashFlags.None = 0 -> SsdeepNET.FuzzyHashFlags
+SsdeepNET.IFuzzyHash
+SsdeepNET.IFuzzyHash.Compare(string x, string y) -> int
+SsdeepNET.IFuzzyHash.ComputeHash(System.ReadOnlySpan<byte> span) -> string
+static SsdeepNET.FuzzyHashExtensions.ComputeHash(this SsdeepNET.FuzzyHash fuzzyHash, System.IO.Stream inputStream) -> string
+static SsdeepNET.FuzzyHashExtensions.ComputeHash(this SsdeepNET.IFuzzyHash fuzzyHash, byte[] buffer) -> string
+static SsdeepNET.FuzzyHashExtensions.ComputeHash(this SsdeepNET.IFuzzyHash fuzzyHash, byte[] buffer, int length) -> string
+static SsdeepNET.FuzzyHashExtensions.ComputeHash(this SsdeepNET.IFuzzyHash fuzzyHash, byte[] buffer, int offset, int length) -> string
+static SsdeepNET.FuzzyHashExtensions.ComputeHash(this SsdeepNET.IFuzzyHash fuzzyHash, System.IO.Stream inputStream) -> string

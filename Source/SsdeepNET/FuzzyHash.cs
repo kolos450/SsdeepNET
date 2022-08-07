@@ -36,19 +36,19 @@ namespace SsdeepNET
         }
 
         /// <inheritdoc />
-        public int Compare(string str1, string str2)
+        public int Compare(string x, string y)
         {
-            if (str1 is null)
-                throw new ArgumentNullException(nameof(str1));
-            if (str2 is null)
-                throw new ArgumentNullException(nameof(str2));
+            if (x is null)
+                throw new ArgumentNullException(nameof(x));
+            if (y is null)
+                throw new ArgumentNullException(nameof(y));
 
             // Each spamsum is prefixed by its block size.
-            var colon1Pos = str1.IndexOf(':');
-            var colon2Pos = str2.IndexOf(':');
+            var colon1Pos = x.IndexOf(':');
+            var colon2Pos = y.IndexOf(':');
             if (colon1Pos == -1 || colon2Pos == -1 ||
-                !int.TryParse(str1.Substring(0, colon1Pos), out var block_size1) ||
-                !int.TryParse(str2.Substring(0, colon2Pos), out var block_size2) ||
+                !int.TryParse(x.Substring(0, colon1Pos), out var block_size1) ||
+                !int.TryParse(y.Substring(0, colon2Pos), out var block_size2) ||
                 block_size1 < 0 || block_size2 < 0)
             {
                 throw new ArgumentException("Badly formed input.");
@@ -61,8 +61,8 @@ namespace SsdeepNET
                 return 0;
             }
 
-            var colon12Pos = str1.IndexOf(':', colon1Pos + 1);
-            var colon22Pos = str2.IndexOf(':', colon2Pos + 1);
+            var colon12Pos = x.IndexOf(':', colon1Pos + 1);
+            var colon22Pos = y.IndexOf(':', colon2Pos + 1);
             if (colon12Pos == -1 || colon22Pos == -1)
             {
                 throw new ArgumentException("Badly formed input.");
@@ -74,14 +74,14 @@ namespace SsdeepNET
             // signatures which don't have filenames attached.
             // We also don't have to advance past the comma however. We don't care
             // about the filename
-            var comma1Pos = str1.IndexOf(',', colon12Pos + 1);
-            var comma2Pos = str2.IndexOf(',', colon22Pos + 1);
+            var comma1Pos = x.IndexOf(',', colon12Pos + 1);
+            var comma2Pos = y.IndexOf(',', colon22Pos + 1);
 
-            var s1_1 = str1.ToCharArray(colon1Pos + 1, colon12Pos - colon1Pos - 1);
-            var s2_1 = str2.ToCharArray(colon2Pos + 1, colon22Pos - colon2Pos - 1);
+            var s1_1 = x.ToCharArray(colon1Pos + 1, colon12Pos - colon1Pos - 1);
+            var s2_1 = y.ToCharArray(colon2Pos + 1, colon22Pos - colon2Pos - 1);
 
-            var s1_2 = str1.ToCharArray(colon12Pos + 1, comma1Pos == -1 ? str1.Length - colon12Pos - 1 : comma1Pos - colon12Pos - 1);
-            var s2_2 = str2.ToCharArray(colon22Pos + 1, comma2Pos == -1 ? str2.Length - colon22Pos - 1 : comma2Pos - colon22Pos - 1);
+            var s1_2 = x.ToCharArray(colon12Pos + 1, comma1Pos == -1 ? x.Length - colon12Pos - 1 : comma1Pos - colon12Pos - 1);
+            var s2_2 = y.ToCharArray(colon22Pos + 1, comma2Pos == -1 ? y.Length - colon22Pos - 1 : comma2Pos - colon22Pos - 1);
 
             if (s1_1.Length is 0 || s2_1.Length is 0 || s1_2.Length is 0 || s2_2.Length is 0)
             {

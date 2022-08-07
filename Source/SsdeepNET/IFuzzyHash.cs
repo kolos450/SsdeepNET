@@ -20,6 +20,6 @@ namespace SsdeepNET
         /// <returns>
         /// A value from 0 to 100 indicating the match score of the two signatures.
         /// </returns>
-        public int Compare(string str1, string str2);
+        public int Compare(string x, string y);
     }
 }
