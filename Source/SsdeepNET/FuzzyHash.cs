@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -91,7 +92,6 @@ namespace SsdeepNET
             // There is very little information content is sequences of the same character like 'LLLLL'.
             // Eliminate any sequences longer than 3. This is especially important when combined
             // with the has_common_substring() test below.
-            // NOTE: This function duplciates str1 and str2.
             s1_1 = EliminateSequences(s1_1);
             s2_1 = EliminateSequences(s2_1);
             s1_2 = EliminateSequences(s1_2);
@@ -235,9 +235,9 @@ namespace SsdeepNET
         /// <returns>True if the two strings do have a common substring, false otherwise.</returns>
         private static bool HasCommonSubstring(char[] s1, char[] s2)
         {
-            var hashes = new uint[Constants.SpamSumLength];
+            var hashes = new List<uint>(Constants.SpamSumLength);
 
-            // Tthere are many possible algorithms for common substring
+            // There are many possible algorithms for common substring
             // detection. In this case I am re-using the rolling hash code
             // to act as a filter for possible substring matches.
 
@@ -245,13 +245,11 @@ namespace SsdeepNET
             // the first string.
             var state = new Roll();
 
-            int i;
-            for (i = 0; i < s1.Length && s1[i] != '\0'; i++)
+            for (int i = 0; i < s1.Length; i++)
             {
                 state.Hash((byte)s1[i]);
-                hashes[i] = state.Sum;
+                hashes.Add(state.Sum);
             }
-            var num_hashes = i;
 
             state = new Roll();
 
@@ -260,20 +258,20 @@ namespace SsdeepNET
             // for the first string. If one matches then we have a
             // candidate substring match. We then confirm that match with
             // a direct string comparison.
-            for (i = 0; i < s2.Length && s2[i] != '\0'; i++)
+            for (int i = 0; i < s2.Length; i++)
             {
                 state.Hash((byte)s2[i]);
                 uint h = state.Sum;
                 if (i < Constants.RollingWindow - 1)
                     continue;
-                for (int j = Constants.RollingWindow - 1; j < num_hashes; j++)
+                for (int j = Constants.RollingWindow - 1; j < hashes.Count; j++)
                 {
                     if (hashes[j] != 0 && hashes[j] == h)
                     {
                         // We have a potential match - confirm it.
                         var s2StartPos = i - Constants.RollingWindow + 1;
                         int len = 0;
-                        while (len + s2StartPos < s2.Length && s2[len + s2StartPos] != '\0')
+                        while (len + s2StartPos < s2.Length)
                             len++;
                         if (len < Constants.RollingWindow)
                             continue;
@@ -289,9 +287,6 @@ namespace SsdeepNET
                                 matched = false;
                                 break;
                             }
-
-                            if (s1char is '\0')
-                                break;
                         }
 
                         if (matched)
