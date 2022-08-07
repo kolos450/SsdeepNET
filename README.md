@@ -1,18 +1,22 @@
 SsdeepNET
 =========
-A C# version of the ssdeep fuzzy text matching algorithm, based on the fuzzy.c source code, taken from version 2.12 of the ssdeep package (http://ssdeep.sourceforge.net/).
+A C# version of the ssdeep fuzzy text matching algorithm, http://ssdeep.sourceforge.net/.
 
 Example
 ------
 
 ```cs
-var bytesFoo = File.ReadAllBytes("foo.txt");
-var bytesBar = File.ReadAllBytes("bar.txt");
+byte[] bytesFoo = File.ReadAllBytes("foo.txt");
+byte[] bytesBar = File.ReadAllBytes("bar.txt");
 
-var hashFoo = Hasher.HashBuffer(bytesFoo, bytesFoo.Length);
-var hashBar = Hasher.HashBuffer(bytesBar, bytesBar.Length);
+FuzzyHash fuzzyHash = new();
 
-var comparisionResult = Comparer.Compare(hashFoo, hashBar);
+// Returns a printable string with a maximum length of 148 characters.
+string hashFoo = fuzzyHash.ComputeHash(bytesFoo);
+string hashBar = fuzzyHash.ComputeHash(bytesBar);
 
-Console.WriteLine(comparisionResult);
+// Returns a value from 0 to 100 indicating the match score of the two hashes.
+int comparisonResult = fuzzyHash.Compare(hashFoo, hashBar);
+
+Console.WriteLine(comparisonResult);
 ```
