@@ -37,7 +37,7 @@ namespace SsdeepNET
         }
 
         /// <inheritdoc />
-        public int Compare(string x, string y)
+        public int CompareHashes(string x, string y)
         {
             if (x is null)
                 throw new ArgumentNullException(nameof(x));
