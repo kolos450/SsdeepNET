@@ -63,7 +63,6 @@ namespace SsdeepNET
 
             var colon12Pos = str1.IndexOf(':', colon1Pos + 1);
             var colon22Pos = str2.IndexOf(':', colon2Pos + 1);
-
             if (colon12Pos == -1 || colon22Pos == -1)
             {
                 throw new ArgumentException("Badly formed input.");
@@ -143,18 +142,17 @@ namespace SsdeepNET
         /// </summary>
         private static char[] EliminateSequences(char[] str)
         {
+            if (str.Length <= 3)
+                return str;
+
             var ret = new char[str.Length];
-            uint i;
-            uint j;
 
             var len = str.Length;
-            for (i = 0; i < 3 && i < len; i++)
+            for (int i = 0; i < 3; i++)
                 ret[i] = str[i];
 
-            if (len < 3)
-                return ret;
-
-            for (i = j = 3; i < len; i++)
+            int j = 3;
+            for (int i = j; i < len; i++)
             {
                 var current = str[i];
                 if (current != str[i - 1] || current != str[i - 2] || current != str[i - 3])
@@ -163,10 +161,13 @@ namespace SsdeepNET
                 }
             }
 
-            var cutted = new char[j];
-            Array.Copy(ret, cutted, j);
+            if (len == j)
+                return ret;
 
-            return ret;
+            var trimmed = new char[j];
+            Array.Copy(ret, trimmed, j);
+
+            return trimmed;
         }
 
         /// <summary>
@@ -175,12 +176,12 @@ namespace SsdeepNET
         /// 100 is a great match. The block_size is used to cope with very small
         /// messages.
         /// </summary>
-        private static int ScoreStrings(char[] s1, char[] s2, int block_size)
+        private static int ScoreStrings(char[] s1, char[] s2, int blockSize)
         {
             var len1 = s1.Length;
             var len2 = s2.Length;
 
-            if (len1 > FuzzyConstants.SpamSumLength || len2 > FuzzyConstants.SpamSumLength)
+            if (len1 > Constants.SpamSumLength || len2 > Constants.SpamSumLength)
             {
                 // Not a real spamsum signature?
                 return 0;
@@ -200,7 +201,7 @@ namespace SsdeepNET
             // proportion of the message that has changed rather than an
             // absolute quantity. It also copes with the variability of
             // the string lengths.
-            score = (score * FuzzyConstants.SpamSumLength) / (len1 + len2);
+            score = (score * Constants.SpamSumLength) / (len1 + len2);
 
             // At this stage the score occurs roughly on a 0-64 scale,
             // with 0 being a good match and 64 being a complete
@@ -212,16 +213,14 @@ namespace SsdeepNET
             // It is possible to get a score above 100 here, but it is a
             // really terrible match.
             if (score >= 100)
-            {
                 return 0;
-            }
 
             // Now re-scale on a 0-100 scale with 0 being a poor match and
             // 100 being a excellent match.
             score = 100 - score;
 
             // When the blocksize is small we don't want to exaggerate the match size.
-            var matchSize = block_size / FuzzyConstants.MinBlocksize * Math.Min(len1, len2);
+            var matchSize = blockSize / Constants.MinBlocksize * Math.Min(len1, len2);
             if (score > matchSize)
                 score = matchSize;
             return score;
@@ -236,7 +235,7 @@ namespace SsdeepNET
         /// <returns>True if the two strings do have a common substring, false otherwise.</returns>
         private static bool HasCommonSubstring(char[] s1, char[] s2)
         {
-            var hashes = new uint[FuzzyConstants.SpamSumLength];
+            var hashes = new uint[Constants.SpamSumLength];
 
             // Tthere are many possible algorithms for common substring
             // detection. In this case I am re-using the rolling hash code
@@ -265,23 +264,23 @@ namespace SsdeepNET
             {
                 state.Hash((byte)s2[i]);
                 uint h = state.Sum;
-                if (i < FuzzyConstants.RollingWindow - 1)
+                if (i < Constants.RollingWindow - 1)
                     continue;
-                for (int j = FuzzyConstants.RollingWindow - 1; j < num_hashes; j++)
+                for (int j = Constants.RollingWindow - 1; j < num_hashes; j++)
                 {
                     if (hashes[j] != 0 && hashes[j] == h)
                     {
                         // We have a potential match - confirm it.
-                        var s2StartPos = i - FuzzyConstants.RollingWindow + 1;
+                        var s2StartPos = i - Constants.RollingWindow + 1;
                         int len = 0;
                         while (len + s2StartPos < s2.Length && s2[len + s2StartPos] != '\0')
                             len++;
-                        if (len < FuzzyConstants.RollingWindow)
+                        if (len < Constants.RollingWindow)
                             continue;
 
                         var matched = true;
-                        var s1StartPos = j - FuzzyConstants.RollingWindow + 1;
-                        for (int pos = 0; pos < FuzzyConstants.RollingWindow; pos++)
+                        var s1StartPos = j - Constants.RollingWindow + 1;
+                        for (int pos = 0; pos < Constants.RollingWindow; pos++)
                         {
                             var s1char = s1[s1StartPos + pos];
                             var s2char = s2[s2StartPos + pos];

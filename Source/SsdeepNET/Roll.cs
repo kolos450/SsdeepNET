@@ -2,7 +2,7 @@
 {
     sealed class Roll
     {
-        private byte[] _window = new byte[FuzzyConstants.RollingWindow];
+        private byte[] _window = new byte[Constants.RollingWindow];
         private uint _h1;
         private uint _h2;
         private uint _h3;
@@ -24,12 +24,12 @@
         public void Hash(byte c)
         {
             _h2 -= _h1;
-            _h2 += FuzzyConstants.RollingWindow * (uint)c;
+            _h2 += Constants.RollingWindow * (uint)c;
 
             _h1 += c;
-            _h1 -= _window[_n % FuzzyConstants.RollingWindow];
+            _h1 -= _window[_n % Constants.RollingWindow];
 
-            _window[_n % FuzzyConstants.RollingWindow] = c;
+            _window[_n % Constants.RollingWindow] = c;
             _n++;
 
             // The original spamsum AND'ed this value with 0xFFFFFFFF which

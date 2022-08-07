@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace SsdeepNET
+﻿namespace SsdeepNET
 {
     /// <summary>
     /// A blockhash contains a signature state for a specific (implicit) blocksize.
@@ -14,12 +12,23 @@ namespace SsdeepNET
         const int HashPrime = 0x01000193;
         const int HashInit = 0x28021967;
 
-        public uint H = HashInit;
-        public uint HalfH = HashInit;
-        public byte[] Digest = new byte[FuzzyConstants.SpamSumLength];
+        public uint H { get; private set; } = HashInit;
+        public uint HalfH { get; private set; } = HashInit;
+        public byte[] Digest = new byte[Constants.SpamSumLength];
         public byte HalfDigest;
 
-        public uint DLen;
+        public uint DigestLen { get; private set; }
+
+        public BlockhashContext()
+            : this(HashInit, HashInit)
+        {
+        }
+
+        public BlockhashContext(uint h, uint halfH)
+        {
+            H = h;
+            HalfH = halfH;
+        }
 
         public void Hash(byte c)
         {
@@ -37,9 +46,9 @@ namespace SsdeepNET
 
         public void Reset()
         {
-            ++DLen;
+            ++DigestLen;
             H = HashInit;
-            if (DLen < FuzzyConstants.SpamSumLength / 2)
+            if (DigestLen < Constants.SpamSumLength / 2)
             {
                 HalfH = HashInit;
                 HalfDigest = 0;
