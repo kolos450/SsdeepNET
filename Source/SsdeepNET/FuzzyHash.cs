@@ -1,20 +1,42 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace SsdeepNET
 {
-    public static class Comparer
+    /// <summary>
+    /// Computes the ssdeep fuzzy hash for the input data.
+    /// </summary>
+    public sealed class FuzzyHash : IFuzzyHash
     {
+        readonly FuzzyHashAlgorithm _engine;
+
+        public FuzzyHash(FuzzyHashFlags hashMode = FuzzyHashFlags.None)
+        {
+            _engine = new(hashMode);
+        }
+
         /// <summary>
-        /// Given two spamsum strings return a value indicating the degree to which they match.
+        /// Gets the fuzzy hash flags.
         /// </summary>
-        /// <returns>
-        /// A value from 0 to 100 indicating the match score of the two signatures.
-        /// </returns>
-        public static int Compare(string str1, string str2)
+        public FuzzyHashFlags Flags => _engine.Flags;
+
+        /// <summary>
+        /// Returns the compatible <see cref="HashAlgorithm"/> instance.
+        /// </summary>
+        public HashAlgorithm AsHashAlgorithm() => _engine;
+
+        /// <inheritdoc />
+        public string ComputeHash(ReadOnlySpan<byte> span)
+        {
+            _engine.HashCore(span);
+            var hash = _engine.HashFinalCore();
+            _engine.Initialize();
+            return Encoding.ASCII.GetString(hash.Array, hash.Offset, hash.Count);
+        }
+
+        /// <inheritdoc />
+        public int Compare(string str1, string str2)
         {
             if (str1 is null)
                 throw new ArgumentNullException(nameof(str1));
@@ -70,7 +92,7 @@ namespace SsdeepNET
             // There is very little information content is sequences of the same character like 'LLLLL'.
             // Eliminate any sequences longer than 3. This is especially important when combined
             // with the has_common_substring() test below.
-            // NOTE: This function duplciates str1 and str2
+            // NOTE: This function duplciates str1 and str2.
             s1_1 = EliminateSequences(s1_1);
             s2_1 = EliminateSequences(s2_1);
             s1_2 = EliminateSequences(s1_2);
@@ -160,45 +182,45 @@ namespace SsdeepNET
 
             if (len1 > FuzzyConstants.SpamSumLength || len2 > FuzzyConstants.SpamSumLength)
             {
-                // not a real spamsum signature?
+                // Not a real spamsum signature?
                 return 0;
             }
 
-            // the two strings must have a common substring of length
-            // ROLLING_WINDOW to be candidates
+            // The two strings must have a common substring of length
+            // ROLLING_WINDOW to be candidates.
             if (!HasCommonSubstring(s1, s2))
                 return 0;
 
-            // compute the edit distance between the two strings. The edit distance gives
-            // us a pretty good idea of how closely related the two strings are
+            // Compute the edit distance between the two strings. The edit distance gives
+            // us a pretty good idea of how closely related the two strings are.
             var score = EditDistance.Compute(s1, s2);
 
-            // scale the edit distance by the lengths of the two
+            // Scale the edit distance by the lengths of the two
             // strings. This changes the score to be a measure of the
             // proportion of the message that has changed rather than an
             // absolute quantity. It also copes with the variability of
             // the string lengths.
             score = (score * FuzzyConstants.SpamSumLength) / (len1 + len2);
 
-            // at this stage the score occurs roughly on a 0-64 scale,
+            // At this stage the score occurs roughly on a 0-64 scale,
             // with 0 being a good match and 64 being a complete
-            // mismatch
+            // mismatch.
 
-            // rescale to a 0-100 scale (friendlier to humans)
+            // Rescale to a 0-100 scale (friendlier to humans).
             score = (100 * score) / 64;
 
-            // it is possible to get a score above 100 here, but it is a
-            // really terrible match
+            // It is possible to get a score above 100 here, but it is a
+            // really terrible match.
             if (score >= 100)
             {
                 return 0;
             }
 
-            // now re-scale on a 0-100 scale with 0 being a poor match and
+            // Now re-scale on a 0-100 scale with 0 being a poor match and
             // 100 being a excellent match.
             score = 100 - score;
 
-            // when the blocksize is small we don't want to exaggerate the match size
+            // When the blocksize is small we don't want to exaggerate the match size.
             var matchSize = block_size / FuzzyConstants.MinBlocksize * Math.Min(len1, len2);
             if (score > matchSize)
                 score = matchSize;
@@ -211,19 +233,17 @@ namespace SsdeepNET
         /// false positive rate for low score thresholds while having
         /// negligable affect on the rate of spam detection.
         /// </summary>
-        /// <param name="s1"></param>
-        /// <param name="s2"></param>
         /// <returns>True if the two strings do have a common substring, false otherwise.</returns>
         private static bool HasCommonSubstring(char[] s1, char[] s2)
         {
             var hashes = new uint[FuzzyConstants.SpamSumLength];
 
-            // there are many possible algorithms for common substring
+            // Tthere are many possible algorithms for common substring
             // detection. In this case I am re-using the rolling hash code
-            // to act as a filter for possible substring matches
+            // to act as a filter for possible substring matches.
 
-            // first compute the windowed rolling hash at each offset in
-            // the first string
+            // First compute the windowed rolling hash at each offset in
+            // the first string.
             var state = new Roll();
 
             int i;
@@ -236,11 +256,11 @@ namespace SsdeepNET
 
             state = new Roll();
 
-            // now for each offset in the second string compute the
+            // Now for each offset in the second string compute the
             // rolling hash and compare it to all of the rolling hashes
             // for the first string. If one matches then we have a
             // candidate substring match. We then confirm that match with
-            // a direct string comparison 
+            // a direct string comparison.
             for (i = 0; i < s2.Length && s2[i] != '\0'; i++)
             {
                 state.Hash((byte)s2[i]);
@@ -251,7 +271,7 @@ namespace SsdeepNET
                 {
                     if (hashes[j] != 0 && hashes[j] == h)
                     {
-                        // we have a potential match - confirm it
+                        // We have a potential match - confirm it.
                         var s2StartPos = i - FuzzyConstants.RollingWindow + 1;
                         int len = 0;
                         while (len + s2StartPos < s2.Length && s2[len + s2StartPos] != '\0')

@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SsdeepNET
 {
@@ -18,10 +14,11 @@ namespace SsdeepNET
         const int HashPrime = 0x01000193;
         const int HashInit = 0x28021967;
 
-        public uint H;
-        public uint HalfH;
+        public uint H = HashInit;
+        public uint HalfH = HashInit;
         public byte[] Digest = new byte[FuzzyConstants.SpamSumLength];
         public byte HalfDigest;
+
         public uint DLen;
 
         public void Hash(byte c)
@@ -30,15 +27,17 @@ namespace SsdeepNET
             HalfH = Hash(c, HalfH);
         }
 
-        /* A simple non-rolling hash, based on the FNV hash. */
+        /// <summary>
+        /// A simple non-rolling hash, based on the FNV hash.
+        /// </summary>
         private static uint Hash(byte c, uint h)
         {
             return (h * HashPrime) ^ c;
         }
 
-        public void Reset(bool init = false)
+        public void Reset()
         {
-            Digest[init ? DLen : ++DLen] = 0;
+            ++DLen;
             H = HashInit;
             if (DLen < FuzzyConstants.SpamSumLength / 2)
             {

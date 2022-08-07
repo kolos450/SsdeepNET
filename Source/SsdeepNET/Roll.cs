@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SsdeepNET
+﻿namespace SsdeepNET
 {
     sealed class Roll
     {
@@ -38,9 +32,9 @@ namespace SsdeepNET
             _window[_n % FuzzyConstants.RollingWindow] = c;
             _n++;
 
-            /* The original spamsum AND'ed this value with 0xFFFFFFFF which
-             * in theory should have no effect. This AND has been removed
-             * for performance (jk) */
+            // The original spamsum AND'ed this value with 0xFFFFFFFF which
+            // in theory should have no effect. This AND has been removed
+            // for performance (jk).
             _h3 <<= 5;
             _h3 ^= c;
         }

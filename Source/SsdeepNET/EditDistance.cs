@@ -5,20 +5,18 @@ namespace SsdeepNET
     /// <summary>
     /// Levenshtein distance calculator.
     /// </summary>
-    internal static class EditDistance
+    static class EditDistance
     {
-        /**
-         * Modified levenshtein distance calculation
-         *
-         * This program can be used, redistributed or modified under any of
-         * Boost Software License 1.0, GPL v2 or GPL v3
-         * See the file COPYING for details.
-         *
-         * $Id$
-         *
-         * Copyright (C) 2014 kikairoya <kikairoya@gmail.com>
-         * Copyright (C) 2014 Jesse Kornblum <research@jessekornblum.com>
-         */
+        //
+        // Modified levenshtein distance calculation
+        //
+        // This program can be used, redistributed or modified under any of
+        // Boost Software License 1.0, GPL v2 or GPL v3
+        // See the file COPYING for details.
+        //
+        // Copyright (C) 2014 kikairoya <kikairoya@gmail.com>
+        // Copyright (C) 2014 Jesse Kornblum <research@jessekornblum.com>
+        //
 
         const int MaxLength = 64;
         const int InsertCost = 1;

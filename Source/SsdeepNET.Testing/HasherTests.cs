@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Text;
 using Xunit;
@@ -10,16 +7,17 @@ namespace SsdeepNET.Testing
 {
     public class HasherTests
     {
-        private static void Test(byte[] input, string expectedHash, FuzzyHashMode mode = FuzzyHashMode.None)
+        private static void Test(byte[] input, string expectedHash, FuzzyHashFlags mode = FuzzyHashFlags.None)
         {
-            var actualHash = Hasher.HashBuffer(input, mode);
+            var hash = new FuzzyHash(mode);
+            var actualHash = hash.ComputeHash(input);
             Assert.Equal(expectedHash, actualHash);
         }
 
-        private static void Test(string input, string expectedHash, FuzzyHashMode mode = FuzzyHashMode.None) =>
+        private static void Test(string input, string expectedHash, FuzzyHashFlags mode = FuzzyHashFlags.None) =>
             Test(Encoding.UTF8.GetBytes(input), expectedHash, mode);
 
-        private static void TestRandom(int seed, int count, string expectedHash, FuzzyHashMode mode = FuzzyHashMode.None)
+        private static void TestRandom(int seed, int count, string expectedHash, FuzzyHashFlags mode = FuzzyHashFlags.None)
         {
             var rand = new Random(seed);
             var buffer = new byte[count];
@@ -35,8 +33,8 @@ namespace SsdeepNET.Testing
         [Fact]
         public void Test1()
         {
-            Assert.Throws<ArgumentNullException>(() => Hasher.HashBuffer(null, 0));
-            Assert.Throws<ArgumentException>(() => Hasher.HashBuffer(Array.Empty<byte>(), 10));
+            Assert.Throws<ArgumentNullException>(() => new FuzzyHash().ComputeHash(null, 0));
+            Assert.Throws<ArgumentException>(() => new FuzzyHash().ComputeHash(Array.Empty<byte>(), 10));
         }
 
         [Fact]
