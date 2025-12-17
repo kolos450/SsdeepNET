@@ -87,10 +87,6 @@ namespace SsdeepNET.Testing
         [Fact]
         public void Test4c() =>
             TestRandom(1, 10000, "192:/rtCMPFGVk+1cvtuIyeEUGZnhbvC6VsyYT6k8ylgKCaLizoQSbl:/5+7eVvwUL7gKCpzNSbl");
-
-        [Fact]
-        public void TestImage() => 
-            Test(File.ReadAllBytes("/home/nils/Documents/me.jpg"), "1536:JyTO1GCxFMptvnmi3gU3hvFXLsbc+NmgAlGU89gE2QOyvTTP:+OhxyCiD3hdsbc3Z589g7KTb");
         
         //Important RUN with Release build (over 10 times faster)
         // [Fact]
