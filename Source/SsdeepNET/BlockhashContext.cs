@@ -1,4 +1,6 @@
-﻿namespace SsdeepNET
+﻿using System.Runtime.CompilerServices;
+
+namespace SsdeepNET
 {
     /// <summary>
     /// A blockhash contains a signature state for a specific (implicit) blocksize.
@@ -7,46 +9,38 @@
     /// long. The halfh hash is needed be able to truncate digest for the second
     /// output hash to stay compatible with ssdeep output.
     /// </summary>
-    sealed class BlockhashContext
+    internal struct BlockhashContext
     {
         const int HashPrime = 0x01000193;
-        const int HashInit = 0x28021967;
+        public const int HashInit = 0x28021967;
 
-        public uint H { get; private set; } = HashInit;
-        public uint HalfH { get; private set; } = HashInit;
-        public byte[] Digest = new byte[Constants.SpamSumLength];
+        public uint H ;
+        public uint HalfH;
+        public byte[] Digest;
         public byte HalfDigest;
 
-        public uint DigestLen { get; private set; }
-
-        public BlockhashContext()
-            : this(HashInit, HashInit)
-        {
-        }
+        public uint DigestLen;
 
         public BlockhashContext(uint h, uint halfH)
         {
             H = h;
             HalfH = halfH;
+            HalfDigest = 0;
+            DigestLen = 0;
+            Digest = new byte[Constants.SpamSumLength];
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Hash(byte c)
         {
-            H = Hash(c, H);
-            HalfH = Hash(c, HalfH);
+            H = (H * HashPrime) ^ c;
+            HalfH = (HalfH * HashPrime) ^ c;
         }
 
-        /// <summary>
-        /// A simple non-rolling hash, based on the FNV hash.
-        /// </summary>
-        private static uint Hash(byte c, uint h)
-        {
-            return (h * HashPrime) ^ c;
-        }
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Reset()
         {
-            ++DigestLen;
+            DigestLen++;
             H = HashInit;
             if (DigestLen < Constants.SpamSumLength / 2)
             {

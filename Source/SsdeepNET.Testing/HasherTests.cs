@@ -1,11 +1,14 @@
 ﻿using System;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace SsdeepNET.Testing
 {
-    public class HasherTests
+    public class HasherTests(ITestOutputHelper Output)
     {
         private static void Test(byte[] input, string expectedHash, FuzzyHashFlags mode = FuzzyHashFlags.None)
         {
@@ -28,6 +31,22 @@ namespace SsdeepNET.Testing
             }
 
             Test(buffer, expectedHash);
+        }
+
+        private void TestSpeed(string fileName, int maxDurationMilliseconds, FuzzyHashFlags mode = FuzzyHashFlags.None)
+        {
+            var hash = new FuzzyHash(mode);
+            //FileStream fileStream = new(fileName, FileMode.Open);
+            var fileStream = File.ReadAllBytes(fileName);
+
+            var sw = Stopwatch.StartNew();
+            var actualHash = hash.ComputeHash(fileStream);
+            sw.Stop();
+
+            Output.WriteLine($"Computed hash: {actualHash}");
+            Assert.True(sw.ElapsedMilliseconds < maxDurationMilliseconds, $"Fail, Call took {sw.ElapsedMilliseconds} ms");
+            Output.WriteLine($"Call took {sw.ElapsedMilliseconds} ms");
+             
         }
 
         [Fact]
@@ -68,5 +87,14 @@ namespace SsdeepNET.Testing
         [Fact]
         public void Test4c() =>
             TestRandom(1, 10000, "192:/rtCMPFGVk+1cvtuIyeEUGZnhbvC6VsyYT6k8ylgKCaLizoQSbl:/5+7eVvwUL7gKCpzNSbl");
+
+        [Fact]
+        public void TestImage() => 
+            Test(File.ReadAllBytes("/home/nils/Documents/me.jpg"), "1536:JyTO1GCxFMptvnmi3gU3hvFXLsbc+NmgAlGU89gE2QOyvTTP:+OhxyCiD3hdsbc3Z589g7KTb");
+        
+        //Important RUN with Release build (over 10 times faster)
+        // [Fact]
+        // public void TestDurationLargeFile() => 
+        //     TestSpeed("/somefile", 5000);
     }
 }
