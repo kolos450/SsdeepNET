@@ -61,7 +61,7 @@ namespace SsdeepNET
         {
             var segment = HashFinalCore();
             var buffer = new byte[segment.Count];
-            Buffer.BlockCopy(segment.Array, segment.Offset, buffer, 0, segment.Count);
+            Buffer.BlockCopy(segment.Array!, segment.Offset, buffer, 0, segment.Count);
             return buffer;
         }
 

@@ -35,7 +35,7 @@ namespace SsdeepNET
             _engine.HashCore(span);
             var hash = _engine.HashFinalCore();
             _engine.Initialize();
-            return Encoding.ASCII.GetString(hash.Array, hash.Offset, hash.Count);
+            return Encoding.ASCII.GetString(hash.Array!, hash.Offset, hash.Count);
         }
 
         /// <inheritdoc />
