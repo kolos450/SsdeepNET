@@ -14,12 +14,12 @@ namespace SsdeepNET
         const int HashPrime = 0x01000193;
         const int HashInit = 0x28021967;
 
-        public uint H { get; private set; } = HashInit;
-        public uint HalfH { get; private set; } = HashInit;
+        public uint H;
+        public uint HalfH;
         public byte[] Digest = new byte[SpamSumLength];
         public byte HalfDigest;
 
-        public int DigestLen { get; private set; }
+        public int DigestLen;
 
         public BlockhashContext()
             : this(HashInit, HashInit)
