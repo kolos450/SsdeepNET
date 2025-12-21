@@ -1,11 +1,13 @@
-﻿namespace SsdeepNET
+﻿using static SsdeepNET.Constants;
+
+namespace SsdeepNET
 {
     /// <summary>
-    /// A blockhash contains a signature state for a specific (implicit) blocksize.
-    /// The blocksize is given by SSDEEP_BS(index). The h and halfh members are the
-    /// FNV hashes, where halfh stops to be reset after digest is SPAMSUM_LENGTH/2
-    /// long. The halfh hash is needed be able to truncate digest for the second
-    /// output hash to stay compatible with ssdeep output.
+    /// A blockhash contains a signature state for a specific (implicit) blocksize. The blocksize
+    /// is equal to <see cref="MinBlocksize"/> &lt;&lt; index. The <see cref="H"/> and
+    /// <see cref="HalfH"/> members are the FNV hashes, where <see cref="HalfH"/> stops to be reset
+    /// after digest is <see cref="SpamSumLength"/> long. The <see cref="HalfH"/> hash is needed be
+    /// able to truncate digest for the second output hash to stay compatible with ssdeep output.
     /// </summary>
     sealed class BlockhashContext
     {
@@ -14,7 +16,7 @@
 
         public uint H { get; private set; } = HashInit;
         public uint HalfH { get; private set; } = HashInit;
-        public byte[] Digest = new byte[Constants.SpamSumLength];
+        public byte[] Digest = new byte[SpamSumLength];
         public byte HalfDigest;
 
         public uint DigestLen { get; private set; }
@@ -48,7 +50,7 @@
         {
             ++DigestLen;
             H = HashInit;
-            if (DigestLen < Constants.SpamSumLength / 2)
+            if (DigestLen < SpamSumLength / 2)
             {
                 HalfH = HashInit;
                 HalfDigest = 0;

@@ -12,7 +12,6 @@ namespace SsdeepNET
         //
         // This program can be used, redistributed or modified under any of
         // Boost Software License 1.0, GPL v2 or GPL v3
-        // See the file COPYING for details.
         //
         // Copyright (C) 2014 kikairoya <kikairoya@gmail.com>
         // Copyright (C) 2014 Jesse Kornblum <research@jessekornblum.com>

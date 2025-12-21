@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 
+using static SsdeepNET.Constants;
+
 namespace SsdeepNET
 {
     /// <summary>
@@ -69,12 +71,12 @@ namespace SsdeepNET
                 throw new ArgumentException("Badly formed input.");
             }
 
-            // Chop the second string at the comma--just before the filename.
+            // Chop the second string at the comma - just before the filename.
             // If the strings don't have a comma (i.e. don't have a filename)
             // that's ok. It's not an error. This function can be called on
             // signatures which don't have filenames attached.
             // We also don't have to advance past the comma however. We don't care
-            // about the filename
+            // about the filename.
             var comma1Pos = x.IndexOf(',', colon12Pos + 1);
             var comma2Pos = y.IndexOf(',', colon22Pos + 1);
 
@@ -91,7 +93,7 @@ namespace SsdeepNET
 
             // There is very little information content is sequences of the same character like 'LLLLL'.
             // Eliminate any sequences longer than 3. This is especially important when combined
-            // with the has_common_substring() test below.
+            // with the HasCommonSubstring() test below.
             s1_1 = EliminateSequences(s1_1);
             s2_1 = EliminateSequences(s2_1);
             s1_2 = EliminateSequences(s1_2);
@@ -142,12 +144,12 @@ namespace SsdeepNET
         /// </summary>
         private static char[] EliminateSequences(char[] str)
         {
-            var newLength = BufferUtilities.EliminateSequences(str, 0, null, 0, str.Length, Constants.SequencesToEliminateLength);
+            var newLength = BufferUtilities.EliminateSequences(str, 0, null, 0, str.Length, SequencesToEliminateLength);
             if (newLength == str.Length)
                 return str;
 
             var newStr = new char[newLength];
-            BufferUtilities.EliminateSequences(str, 0, newStr, 0, str.Length, Constants.SequencesToEliminateLength);
+            BufferUtilities.EliminateSequences(str, 0, newStr, 0, str.Length, SequencesToEliminateLength);
             return newStr;
         }
 
@@ -162,14 +164,13 @@ namespace SsdeepNET
             var len1 = s1.Length;
             var len2 = s2.Length;
 
-            if (len1 > Constants.SpamSumLength || len2 > Constants.SpamSumLength)
+            if (len1 > SpamSumLength || len2 > SpamSumLength)
             {
                 // Not a real spamsum signature?
                 return 0;
             }
 
-            // The two strings must have a common substring of length
-            // ROLLING_WINDOW to be candidates.
+            // The two strings must have a common substring of length RollingWindow to be candidates.
             if (!HasCommonSubstring(s1, s2))
                 return 0;
 
@@ -182,7 +183,7 @@ namespace SsdeepNET
             // proportion of the message that has changed rather than an
             // absolute quantity. It also copes with the variability of
             // the string lengths.
-            score = (score * Constants.SpamSumLength) / (len1 + len2);
+            score = (score * SpamSumLength) / (len1 + len2);
 
             // At this stage the score occurs roughly on a 0-64 scale,
             // with 0 being a good match and 64 being a complete
@@ -201,22 +202,24 @@ namespace SsdeepNET
             score = 100 - score;
 
             // When the blocksize is small we don't want to exaggerate the match size.
-            var matchSize = blockSize / Constants.MinBlocksize * Math.Min(len1, len2);
+            var matchSize = blockSize / MinBlocksize * Math.Min(len1, len2);
             if (score > matchSize)
                 score = matchSize;
             return score;
         }
 
         /// <summary>
-        /// We only accept a match if we have at least one common substring in
-        /// the signature of length ROLLING_WINDOW. This dramatically drops the
-        /// false positive rate for low score thresholds while having
-        /// negligable affect on the rate of spam detection.
+        /// We only accept a match if we have at least one common substring in the signature of
+        /// length <see cref="RollingWindow"/>. This dramatically drops the false positive rate
+        /// for low score thresholds while having negligable affect on the rate of spam detection.
         /// </summary>
-        /// <returns>True if the two strings do have a common substring, false otherwise.</returns>
+        /// <returns>
+        /// <see langword="true"/> if the two strings do have a common substring;
+        /// otherwise, <see langword="false"/>.
+        /// </returns>
         private static bool HasCommonSubstring(char[] s1, char[] s2)
         {
-            var hashes = new List<uint>(Constants.SpamSumLength);
+            var hashes = new List<uint>(SpamSumLength);
 
             // There are many possible algorithms for common substring
             // detection. In this case I am re-using the rolling hash code
@@ -243,23 +246,23 @@ namespace SsdeepNET
             {
                 state.Hash((byte)s2[i]);
                 uint h = state.Sum;
-                if (i < Constants.RollingWindow - 1)
+                if (i < RollingWindow - 1)
                     continue;
-                for (int j = Constants.RollingWindow - 1; j < hashes.Count; j++)
+                for (int j = RollingWindow - 1; j < hashes.Count; j++)
                 {
                     if (hashes[j] != 0 && hashes[j] == h)
                     {
                         // We have a potential match - confirm it.
-                        var s2StartPos = i - Constants.RollingWindow + 1;
+                        var s2StartPos = i - RollingWindow + 1;
                         int len = 0;
                         while (len + s2StartPos < s2.Length)
                             len++;
-                        if (len < Constants.RollingWindow)
+                        if (len < RollingWindow)
                             continue;
 
                         var matched = true;
-                        var s1StartPos = j - Constants.RollingWindow + 1;
-                        for (int pos = 0; pos < Constants.RollingWindow; pos++)
+                        var s1StartPos = j - RollingWindow + 1;
+                        for (int pos = 0; pos < RollingWindow; pos++)
                         {
                             var s1char = s1[s1StartPos + pos];
                             var s2char = s2[s2StartPos + pos];

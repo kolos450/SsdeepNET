@@ -3,6 +3,8 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
+using static SsdeepNET.Constants;
+
 namespace SsdeepNET
 {
     sealed class FuzzyHashAlgorithm : HashAlgorithm
@@ -35,7 +37,7 @@ namespace SsdeepNET
         {
             if (_bh is null)
             {
-                _bh = new BlockhashContext[Constants.NumBlockhashes];
+                _bh = new BlockhashContext[NumBlockhashes];
                 _bh[0] = new BlockhashContext();
                 _bhCount = 1;
                 _bhstart = 0;
@@ -67,27 +69,27 @@ namespace SsdeepNET
         {
             EnsureInitialized();
 
-            var result = new byte[Constants.MaxResultLength];
+            var result = new byte[MaxResultLength];
             var pos = 0;
 
             int bi = _bhstart;
             uint h = _roll.Sum;
 
             // Initial blocksize guess.
-            while ((Constants.MinBlocksize << bi) * Constants.SpamSumLength < _totalSize)
+            while ((MinBlocksize << bi) * SpamSumLength < _totalSize)
             {
                 ++bi;
-                if (bi >= Constants.NumBlockhashes)
+                if (bi >= NumBlockhashes)
                     throw new OverflowException("Blockhashes number overflow.");
             }
 
             // Adapt blocksize guess to actual digest length.
             bi = Math.Min(_bhCount - 1, bi);
 
-            while (bi > _bhstart && _bh[bi].DigestLen < Constants.SpamSumLength / 2)
+            while (bi > _bhstart && _bh[bi].DigestLen < SpamSumLength / 2)
                 --bi;
 
-            var actualBlockSize = ((uint)Constants.MinBlocksize) << bi;
+            var actualBlockSize = ((uint)MinBlocksize) << bi;
             var blockSizeChars = actualBlockSize.ToString().ToCharArray();
             int i = blockSizeChars.Length;
             for (int j = 0; j < i; j++)
@@ -101,7 +103,7 @@ namespace SsdeepNET
 
             i = (int)_bh[bi].DigestLen;
             if (eliminateSequences)
-                i = BufferUtilities.EliminateSequences(_bh[bi].Digest, 0, result, pos, i, Constants.SequencesToEliminateLength);
+                i = BufferUtilities.EliminateSequences(_bh[bi].Digest, 0, result, pos, i, SequencesToEliminateLength);
             else
                 Buffer.BlockCopy(_bh[bi].Digest, 0, result, pos, i);
             pos += i;
@@ -126,11 +128,11 @@ namespace SsdeepNET
             {
                 ++bi;
                 i = (int)_bh[bi].DigestLen;
-                if (!dontTruncate && i > Constants.SpamSumLength / 2 - 1)
-                    i = Constants.SpamSumLength / 2 - 1;
+                if (!dontTruncate && i > SpamSumLength / 2 - 1)
+                    i = SpamSumLength / 2 - 1;
 
                 if (eliminateSequences)
-                    i = BufferUtilities.EliminateSequences(_bh[bi].Digest, 0, result, pos, i, Constants.SequencesToEliminateLength);
+                    i = BufferUtilities.EliminateSequences(_bh[bi].Digest, 0, result, pos, i, SequencesToEliminateLength);
                 else
                     Buffer.BlockCopy(_bh[bi].Digest, 0, result, pos, i);
 
@@ -165,7 +167,7 @@ namespace SsdeepNET
 
         private void TryForkBlockhash()
         {
-            if (_bhCount < Constants.NumBlockhashes)
+            if (_bhCount < NumBlockhashes)
             {
                 var last = _bh![_bhCount - 1];
                 _bh[_bhCount++] = new BlockhashContext(last.H, last.HalfH);
@@ -177,10 +179,10 @@ namespace SsdeepNET
             if (_bhCount - _bhstart < 2)
                 // Need at least two working hashes.
                 return;
-            if ((((uint)Constants.MinBlocksize) << _bhstart) * Constants.SpamSumLength >= _totalSize)
+            if ((((uint)MinBlocksize) << _bhstart) * SpamSumLength >= _totalSize)
                 // Initial blocksize estimate would select this or a smaller blocksize.
                 return;
-            if (_bh![_bhstart + 1].DigestLen < Constants.SpamSumLength / 2)
+            if (_bh![_bhstart + 1].DigestLen < SpamSumLength / 2)
                 // Estimate adjustment would select this blocksize.
                 return;
             // At this point we are clearly no longer interested in the start_blocksize. Get rid of it.
@@ -202,14 +204,14 @@ namespace SsdeepNET
             for (int i = _bhstart; i < _bhCount; ++i)
             {
                 // With growing blocksize almost no runs fail the next test.
-                if (h % (((uint)Constants.MinBlocksize) << i) != (((uint)Constants.MinBlocksize) << i) - 1)
+                if (h % (((uint)MinBlocksize) << i) != (((uint)MinBlocksize) << i) - 1)
                     // Once this condition is false for one bs, it is
                     // automatically false for all further bs. I.e. if
                     // h === -1 (mod 2*bs) then h === -1 (mod bs).
                     break;
                 // We have hit a reset point. We now emit hashes which are
                 // based on all characters in the piece of the message between
-                // the last reset point and this one/
+                // the last reset point and this one.
                 if (0 == _bh![i].DigestLen)
                 {
                     // Can only happen 30 times.
@@ -218,7 +220,7 @@ namespace SsdeepNET
                 }
                 _bh[i].Digest[_bh[i].DigestLen] = Base64[_bh[i].H % 64];
                 _bh[i].HalfDigest = Base64[_bh[i].HalfH % 64];
-                if (_bh[i].DigestLen < Constants.SpamSumLength - 1)
+                if (_bh[i].DigestLen < SpamSumLength - 1)
                 {
                     // We can have a problem with the tail overflowing. The
                     // easiest way to cope with this is to only reset the
