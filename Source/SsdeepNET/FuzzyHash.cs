@@ -33,9 +33,16 @@ namespace SsdeepNET
         public string ComputeHash(ReadOnlySpan<byte> span)
         {
             _engine.HashSpan(span);
-            var hash = _engine.HashFinalCore();
+
+            Span<byte> buffer = stackalloc byte[MaxResultLength];
+            int length = _engine.HashFinalCore(buffer);
             _engine.Initialize();
-            return Encoding.ASCII.GetString(hash.Array!, hash.Offset, hash.Count);
+
+#if NET8_0_OR_GREATER
+            return Encoding.ASCII.GetString(buffer.Slice(0, length));
+#else
+            return Encoding.ASCII.GetString(buffer.Slice(0, length).ToArray());
+#endif
         }
 
         /// <inheritdoc />
@@ -144,12 +151,12 @@ namespace SsdeepNET
         /// </summary>
         private static char[] EliminateSequences(char[] str)
         {
-            var newLength = BufferUtilities.EliminateSequences(str, 0, null, 0, str.Length, SequencesToEliminateLength);
+            var newLength = BufferUtilities.EliminateSequencesDryRun<char>(str, SequencesToEliminateLength);
             if (newLength == str.Length)
                 return str;
 
             var newStr = new char[newLength];
-            BufferUtilities.EliminateSequences(str, 0, newStr, 0, str.Length, SequencesToEliminateLength);
+            BufferUtilities.EliminateSequences<char>(str, newStr, SequencesToEliminateLength);
             return newStr;
         }
 

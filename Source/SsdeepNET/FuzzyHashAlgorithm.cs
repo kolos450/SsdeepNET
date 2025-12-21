@@ -59,17 +59,15 @@ namespace SsdeepNET
 
         protected override byte[] HashFinal()
         {
-            var segment = HashFinalCore();
-            var buffer = new byte[segment.Count];
-            Buffer.BlockCopy(segment.Array!, segment.Offset, buffer, 0, segment.Count);
-            return buffer;
+            Span<byte> buffer = stackalloc byte[MaxResultLength];
+            int length = HashFinalCore(buffer);
+            return buffer.Slice(0, length).ToArray();
         }
 
-        internal ArraySegment<byte> HashFinalCore()
+        internal int HashFinalCore(Span<byte> buffer)
         {
             EnsureInitialized();
 
-            var result = new byte[MaxResultLength];
             var pos = 0;
 
             int bi = _bhstart;
@@ -93,36 +91,39 @@ namespace SsdeepNET
             var blockSizeChars = actualBlockSize.ToString().ToCharArray();
             int i = blockSizeChars.Length;
             for (int j = 0; j < i; j++)
-                result[j + pos] = (byte)blockSizeChars[j];
-            result[i++] = (byte)':';
+                buffer[j + pos] = (byte)blockSizeChars[j];
+            buffer[i++] = (byte)':';
 
             pos += i;
 
             var eliminateSequences = Flags.HasFlag(FuzzyHashFlags.EliminateSequences);
             var dontTruncate = Flags.HasFlag(FuzzyHashFlags.DoNotTruncate);
 
-            i = _bh[bi].DigestLen;
+            i = (int)_bh[bi].DigestLen;
+            var digestSrc = _bh[bi].Digest.AsSpan(0, i);
+            var digestDst = buffer.Slice(pos);
             if (eliminateSequences)
-                i = BufferUtilities.EliminateSequences(_bh[bi].Digest, 0, result, pos, i, SequencesToEliminateLength);
+                i = BufferUtilities.EliminateSequences(digestSrc, digestDst, SequencesToEliminateLength);
             else
-                Buffer.BlockCopy(_bh[bi].Digest, 0, result, pos, i);
+                digestSrc.CopyTo(digestDst);
+
             pos += i;
 
             if (h != 0)
             {
                 var base64Val = Base64[_bh[bi].H % 64];
-                result[pos] = base64Val;
-                if (!eliminateSequences || i < 3 || base64Val != result[pos - 1] || base64Val != result[pos - 2] || base64Val != result[pos - 3])
+                buffer[pos] = base64Val;
+                if (!eliminateSequences || i < 3 || base64Val != buffer[pos - 1] || base64Val != buffer[pos - 2] || base64Val != buffer[pos - 3])
                     ++pos;
             }
             else if (_bh[bi].Digest[i] != 0)
             {
                 var digestVal = _bh[bi].Digest[i];
-                result[pos] = digestVal;
-                if (!eliminateSequences || i < 3 || digestVal != result[pos - 1] || digestVal != result[pos - 2] || digestVal != result[pos - 3])
+                buffer[pos] = digestVal;
+                if (!eliminateSequences || i < 3 || digestVal != buffer[pos - 1] || digestVal != buffer[pos - 2] || digestVal != buffer[pos - 3])
                     ++pos;
             }
-            result[pos++] = (byte)':';
+            buffer[pos++] = (byte)':';
 
             if (bi < _bhCount - 1)
             {
@@ -131,18 +132,20 @@ namespace SsdeepNET
                 if (!dontTruncate && i > SpamSumLength / 2 - 1)
                     i = SpamSumLength / 2 - 1;
 
+                digestSrc = _bh[bi].Digest.AsSpan(0, i);
+                digestDst = buffer.Slice(pos);
                 if (eliminateSequences)
-                    i = BufferUtilities.EliminateSequences(_bh[bi].Digest, 0, result, pos, i, SequencesToEliminateLength);
+                    i = BufferUtilities.EliminateSequences(digestSrc, digestDst, SequencesToEliminateLength);
                 else
-                    Buffer.BlockCopy(_bh[bi].Digest, 0, result, pos, i);
+                    digestSrc.CopyTo(digestDst);
 
                 pos += i;
                 if (h != 0)
                 {
                     h = dontTruncate ? _bh[bi].H : _bh[bi].HalfH;
                     var base64Val = Base64[h % 64];
-                    result[pos] = base64Val;
-                    if (!eliminateSequences || i < 3 || base64Val != result[pos - 1] || base64Val != result[pos - 2] || base64Val != result[pos - 3])
+                    buffer[pos] = base64Val;
+                    if (!eliminateSequences || i < 3 || base64Val != buffer[pos - 1] || base64Val != buffer[pos - 2] || base64Val != buffer[pos - 3])
                         ++pos;
                 }
                 else
@@ -150,19 +153,19 @@ namespace SsdeepNET
                     i = dontTruncate ? _bh[bi].Digest[_bh[bi].DigestLen] : _bh[bi].HalfDigest;
                     if (i != 0)
                     {
-                        result[pos] = (byte)i;
-                        if (!eliminateSequences || i < 3 || i != result[pos - 1] || i != result[pos - 2] || i != result[pos - 3])
+                        buffer[pos] = (byte)i;
+                        if (!eliminateSequences || i < 3 || i != buffer[pos - 1] || i != buffer[pos - 2] || i != buffer[pos - 3])
                             ++pos;
                     }
                 }
             }
             else if (h != 0)
             {
-                result[pos++] = Base64[_bh[bi].H % 64];
+                buffer[pos++] = Base64[_bh[bi].H % 64];
                 // No need to bother with FuzzyHashMode.EliminateSequences, because this digest has length 1.
             }
 
-            return new ArraySegment<byte>(result, 0, pos);
+            return pos;
         }
 
         private void TryForkBlockhash()
