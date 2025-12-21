@@ -54,7 +54,7 @@ namespace SsdeepNET
         protected override void HashCore(byte[] array, int ibStart, int cbSize)
         {
             var memory = new ReadOnlySpan<byte>(array, ibStart, cbSize);
-            HashCore(memory);
+            HashSpan(memory);
         }
 
         protected override byte[] HashFinal()
@@ -236,15 +236,20 @@ namespace SsdeepNET
             }
         }
 
-        internal void HashCore(ReadOnlySpan<byte> span)
+        internal void HashSpan(ReadOnlySpan<byte> source)
         {
             EnsureInitialized();
 
-            _totalSize += span.Length;
+            _totalSize += source.Length;
 
-            for (int i = 0; i < span.Length; i++)
-                EngineStep(span[i]);
+            for (int i = 0; i < source.Length; i++)
+                EngineStep(source[i]);
         }
+
+#if NET8_0_OR_GREATER
+        protected override void HashCore(ReadOnlySpan<byte> source) =>
+            HashSpan(source);
+#endif
 
         public override int HashSize =>
             throw new NotSupportedException("Hash size is variable.");

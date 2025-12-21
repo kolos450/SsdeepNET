@@ -32,7 +32,7 @@ namespace SsdeepNET
         /// <inheritdoc />
         public string ComputeHash(ReadOnlySpan<byte> span)
         {
-            _engine.HashCore(span);
+            _engine.HashSpan(span);
             var hash = _engine.HashFinalCore();
             _engine.Initialize();
             return Encoding.ASCII.GetString(hash.Array!, hash.Offset, hash.Count);
