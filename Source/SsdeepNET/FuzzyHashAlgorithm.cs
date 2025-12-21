@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
@@ -18,7 +18,7 @@ namespace SsdeepNET
         }
 
         private int _bhstart;
-        private BlockhashContext[] _bh;
+        private BlockhashContext[]? _bh;
         private int _bhCount;
         private int _totalSize;
         private Roll _roll;
@@ -30,6 +30,7 @@ namespace SsdeepNET
             Flags = flags;
         }
 
+        [MemberNotNull(nameof(_bh))]
         void EnsureInitialized()
         {
             if (_bh is null)
@@ -166,7 +167,7 @@ namespace SsdeepNET
         {
             if (_bhCount < Constants.NumBlockhashes)
             {
-                var last = _bh[_bhCount - 1];
+                var last = _bh![_bhCount - 1];
                 _bh[_bhCount++] = new BlockhashContext(last.H, last.HalfH);
             }
         }
@@ -179,7 +180,7 @@ namespace SsdeepNET
             if ((((uint)Constants.MinBlocksize) << _bhstart) * Constants.SpamSumLength >= _totalSize)
                 // Initial blocksize estimate would select this or a smaller blocksize.
                 return;
-            if (_bh[_bhstart + 1].DigestLen < Constants.SpamSumLength / 2)
+            if (_bh![_bhstart + 1].DigestLen < Constants.SpamSumLength / 2)
                 // Estimate adjustment would select this blocksize.
                 return;
             // At this point we are clearly no longer interested in the start_blocksize. Get rid of it.
@@ -196,7 +197,7 @@ namespace SsdeepNET
             uint h = _roll.Sum;
 
             for (int i = _bhstart; i < _bhCount; ++i)
-                _bh[i].Hash(c);
+                _bh![i].Hash(c);
 
             for (int i = _bhstart; i < _bhCount; ++i)
             {
@@ -209,7 +210,7 @@ namespace SsdeepNET
                 // We have hit a reset point. We now emit hashes which are
                 // based on all characters in the piece of the message between
                 // the last reset point and this one/
-                if (0 == _bh[i].DigestLen)
+                if (0 == _bh![i].DigestLen)
                 {
                     // Can only happen 30 times.
                     // First step for this blocksize. Clone next.
@@ -239,7 +240,7 @@ namespace SsdeepNET
 
             _totalSize += span.Length;
 
-            for (int i = 0; i<span.Length; i++)
+            for (int i = 0; i < span.Length; i++)
                 EngineStep(span[i]);
         }
 

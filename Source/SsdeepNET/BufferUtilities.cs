@@ -4,7 +4,7 @@ namespace SsdeepNET
 {
     static class BufferUtilities
     {
-        public static int EliminateSequences<T>(T[] src, int srcOffset, T[] dst, int dstOffset, int length, int window)
+        public static int EliminateSequences<T>(T[] src, int srcOffset, T[]? dst, int dstOffset, int length, int window)
             where T : IEquatable<T>
         {
             if (src == null)
