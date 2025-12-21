@@ -19,7 +19,7 @@ namespace SsdeepNET
         public byte[] Digest = new byte[SpamSumLength];
         public byte HalfDigest;
 
-        public uint DigestLen { get; private set; }
+        public int DigestLen { get; private set; }
 
         public BlockhashContext()
             : this(HashInit, HashInit)

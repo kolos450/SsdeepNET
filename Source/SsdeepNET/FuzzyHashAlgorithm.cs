@@ -101,7 +101,7 @@ namespace SsdeepNET
             var eliminateSequences = Flags.HasFlag(FuzzyHashFlags.EliminateSequences);
             var dontTruncate = Flags.HasFlag(FuzzyHashFlags.DoNotTruncate);
 
-            i = (int)_bh[bi].DigestLen;
+            i = _bh[bi].DigestLen;
             if (eliminateSequences)
                 i = BufferUtilities.EliminateSequences(_bh[bi].Digest, 0, result, pos, i, SequencesToEliminateLength);
             else
@@ -127,7 +127,7 @@ namespace SsdeepNET
             if (bi < _bhCount - 1)
             {
                 ++bi;
-                i = (int)_bh[bi].DigestLen;
+                i = _bh[bi].DigestLen;
                 if (!dontTruncate && i > SpamSumLength / 2 - 1)
                     i = SpamSumLength / 2 - 1;
 
