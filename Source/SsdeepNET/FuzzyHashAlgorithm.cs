@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 
 namespace SsdeepNET
@@ -17,7 +18,8 @@ namespace SsdeepNET
         }
 
         private int _bhstart;
-        private List<BlockhashContext> _bh;
+        private BlockhashContext[] _bh;
+        private int _bhCount;
         private int _totalSize;
         private Roll _roll;
 
@@ -32,7 +34,9 @@ namespace SsdeepNET
         {
             if (_bh is null)
             {
-                _bh = new() { new BlockhashContext() };
+                _bh = new BlockhashContext[Constants.NumBlockhashes];
+                _bh[0] = new BlockhashContext();
+                _bhCount = 1;
                 _bhstart = 0;
                 _totalSize = 0;
                 _roll = new();
@@ -77,7 +81,7 @@ namespace SsdeepNET
             }
 
             // Adapt blocksize guess to actual digest length.
-            bi = Math.Min(_bh.Count - 1, bi);
+            bi = Math.Min(_bhCount - 1, bi);
 
             while (bi > _bhstart && _bh[bi].DigestLen < Constants.SpamSumLength / 2)
                 --bi;
@@ -117,7 +121,7 @@ namespace SsdeepNET
             }
             result[pos++] = (byte)':';
 
-            if (bi < _bh.Count - 1)
+            if (bi < _bhCount - 1)
             {
                 ++bi;
                 i = (int)_bh[bi].DigestLen;
@@ -160,16 +164,16 @@ namespace SsdeepNET
 
         private void TryForkBlockhash()
         {
-            if (_bh.Count < Constants.NumBlockhashes)
+            if (_bhCount < Constants.NumBlockhashes)
             {
-                var last = _bh[_bh.Count - 1];
-                _bh.Add(new BlockhashContext(last.H, last.HalfH));
+                var last = _bh[_bhCount - 1];
+                _bh[_bhCount++] = new BlockhashContext(last.H, last.HalfH);
             }
         }
 
         private void TryReduceBlockhash()
         {
-            if (_bh.Count - _bhstart < 2)
+            if (_bhCount - _bhstart < 2)
                 // Need at least two working hashes.
                 return;
             if ((((uint)Constants.MinBlocksize) << _bhstart) * Constants.SpamSumLength >= _totalSize)
@@ -182,6 +186,7 @@ namespace SsdeepNET
             ++_bhstart;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void EngineStep(byte c)
         {
             // At each character we update the rolling hash and the normal hashes.
@@ -190,10 +195,10 @@ namespace SsdeepNET
             _roll.Hash(c);
             uint h = _roll.Sum;
 
-            for (int i = _bhstart; i < _bh.Count; ++i)
+            for (int i = _bhstart; i < _bhCount; ++i)
                 _bh[i].Hash(c);
 
-            for (int i = _bhstart; i < _bh.Count; ++i)
+            for (int i = _bhstart; i < _bhCount; ++i)
             {
                 // With growing blocksize almost no runs fail the next test.
                 if (h % (((uint)Constants.MinBlocksize) << i) != (((uint)Constants.MinBlocksize) << i) - 1)
@@ -234,8 +239,8 @@ namespace SsdeepNET
 
             _totalSize += span.Length;
 
-            foreach (var b in span)
-                EngineStep(b);
+            for (int i = 0; i<span.Length; i++)
+                EngineStep(span[i]);
         }
 
         public override int HashSize =>
